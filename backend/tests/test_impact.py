@@ -1,5 +1,9 @@
 import pytest
-from app.services.impact import calculate_action_impact, calculate_overall_impact
+from app.services.impact import (
+    calculate_action_impact, 
+    calculate_overall_impact, 
+    calculate_purifier_exposure_delta
+)
 from app.models.schemas import HouseholdProfile, TransportProfile, HomeProfile
 
 def test_calculate_action_impact_exercise():
@@ -13,6 +17,14 @@ def test_calculate_action_impact_commute():
     assert impact["co2_saved_kg"] > 0
     assert impact["cost_saved_inr"] > 0
     assert impact["exposure_reduction_pct"] == 35.0
+
+def test_purifier_exposure_delta_logic():
+    """Verify households without purifiers get higher incremental exposure delta (+12%) from DIY hacks."""
+    delta_no_purifier = calculate_purifier_exposure_delta(has_purifier=False)
+    delta_with_purifier = calculate_purifier_exposure_delta(has_purifier=True)
+    assert delta_no_purifier == 12.0
+    assert delta_with_purifier == 8.0
+    assert delta_no_purifier > delta_with_purifier
 
 def test_calculate_overall_impact():
     hh = HouseholdProfile(

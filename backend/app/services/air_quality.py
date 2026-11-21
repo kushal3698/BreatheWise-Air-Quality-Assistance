@@ -61,21 +61,36 @@ CPCB_BREAKPOINTS = {
     ],
 }
 
-def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]]) -> int:
+def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]], round_conc: bool = True) -> int:
+    """
+    Computes a single pollutant sub-index using CPCB piecewise linear interpolation.
+    
+    Formula:
+        I_p = I_lo + ((I_hi - I_lo) / (B_hi - B_lo)) * (C_p - B_lo)
+        
+    Args:
+        conc: Ambient pollutant concentration in µg/m³ (or mg/m³ for CO).
+        breakpoints: Ordered list of CPCB breakpoint dictionaries with c_low, c_high, i_low, i_high.
+        round_conc: If True, evaluates concentration after integer rounding per CPCB protocol
+                    (e.g., PM2.5 60.1 -> 60 yields sub-index 100, PM10 118.3 -> 118 yields 113).
+    Returns:
+        Calculated integer sub-index clamped between 0 and 500.
+    """
     if conc <= 0:
         return 0
+    c_eval = round(conc) if round_conc else conc
     matched_bp = None
     for i, bp in enumerate(breakpoints):
         prev_high = breakpoints[i - 1]["c_high"] if i > 0 else 0
-        if bp["c_low"] <= conc <= bp["c_high"]:
+        if bp["c_low"] <= c_eval <= bp["c_high"]:
             matched_bp = bp
             break
-        elif prev_high < conc < bp["c_low"]:
+        elif prev_high < c_eval < bp["c_low"]:
             matched_bp = bp
             break
             
     if not matched_bp:
-        if conc > breakpoints[-1]["c_high"]:
+        if c_eval > breakpoints[-1]["c_high"]:
             return int(breakpoints[-1]["i_high"])
         return 0
         
@@ -83,8 +98,8 @@ def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]]) -> int
     c_lo, c_high = matched_bp["c_low"], matched_bp["c_high"]
     if c_high == c_lo:
         return int(i_lo)
-    val = ((i_hi - i_lo) / (c_high - c_lo)) * (conc - c_lo) + i_lo
-    return round(val)
+    val = ((i_hi - i_lo) / (c_high - c_lo)) * (c_eval - c_lo) + i_lo
+    return min(500, max(0, round(val)))
 
 def calculate_cpcb_aqi(
     pm2_5: Optional[float] = None, 
@@ -92,8 +107,18 @@ def calculate_cpcb_aqi(
     no2: Optional[float] = None,
     so2: Optional[float] = None,
     co: Optional[float] = None,
-    o3: Optional[float] = None
+    o3: Optional[float] = None,
+    round_conc: bool = True
 ) -> int:
+    """
+    Calculates National Air Quality Index (NAQI) as max sub-index across all monitored pollutants.
+    
+    Formula:
+        I_AQI = max(I_PM2.5, I_PM10, I_NO2, I_SO2, I_CO, I_O3)
+        
+    Returns:
+        Composite integer AQI (0-500).
+    """
     sub_indices: List[int] = []
     pollutants = {
         "pm2_5": pm2_5,
@@ -105,7 +130,7 @@ def calculate_cpcb_aqi(
     }
     for pol, val in pollutants.items():
         if val is not None and pol in CPCB_BREAKPOINTS:
-            sub_indices.append(calculate_sub_index(float(val), CPCB_BREAKPOINTS[pol]))
+            sub_indices.append(calculate_sub_index(float(val), CPCB_BREAKPOINTS[pol], round_conc=round_conc))
             
     return max(sub_indices) if sub_indices else 0
 

@@ -74,30 +74,35 @@ const POLLUTANT_NAMES: Record<string, string> = {
   o3: "O₃"
 };
 
-export function calculateCPCB_SubIndex(conc: number, breakpoints: Array<{ c_low: number; c_high: number; i_low: number; i_high: number }>): number {
+export function calculateCPCB_SubIndex(
+  conc: number,
+  breakpoints: Array<{ c_low: number; c_high: number; i_low: number; i_high: number }>,
+  roundConc: boolean = true
+): number {
   if (conc <= 0) return 0;
+  const c_eval = roundConc ? Math.round(conc) : conc;
   let matched_bp = null;
   for (let i = 0; i < breakpoints.length; i++) {
     const bp = breakpoints[i];
     const prev_high = i > 0 ? breakpoints[i - 1].c_high : 0;
-    if (conc >= bp.c_low && conc <= bp.c_high) {
+    if (c_eval >= bp.c_low && c_eval <= bp.c_high) {
       matched_bp = bp;
       break;
-    } else if (prev_high < conc && conc < bp.c_low) {
-      // Float sitting between bands (e.g. 60.1 between 60 and 61): evaluate using upper band per CPCB
+    } else if (prev_high < c_eval && c_eval < bp.c_low) {
+      // Float sitting between bands: evaluate using appropriate band
       matched_bp = bp;
       break;
     }
   }
   if (!matched_bp) {
-    if (conc > breakpoints[breakpoints.length - 1].c_high) {
+    if (c_eval > breakpoints[breakpoints.length - 1].c_high) {
       return breakpoints[breakpoints.length - 1].i_high;
     }
     return 0;
   }
   const { c_low, c_high, i_low, i_high } = matched_bp;
   if (c_high === c_low) return i_low;
-  return Math.round(((i_high - i_low) / (c_high - c_low)) * (conc - c_low) + i_low);
+  return Math.min(500, Math.max(0, Math.round(((i_high - i_low) / (c_high - c_low)) * (c_eval - c_low) + i_low)));
 }
 
 export function calculateCPCB_AQI(
@@ -106,7 +111,8 @@ export function calculateCPCB_AQI(
   no2?: number,
   so2?: number,
   co?: number,
-  o3?: number
+  o3?: number,
+  roundConc: boolean = true
 ): {
   aqi: number;
   category: string;
@@ -123,7 +129,7 @@ export function calculateCPCB_AQI(
 
   for (const [key, val] of Object.entries(pollutants)) {
     if (val !== undefined && val !== null && CPCB_BREAKPOINTS[key]) {
-      subIndices[key] = calculateCPCB_SubIndex(val, CPCB_BREAKPOINTS[key]);
+      subIndices[key] = calculateCPCB_SubIndex(val, CPCB_BREAKPOINTS[key], roundConc);
     }
   }
 

@@ -7,14 +7,22 @@ from app.services.llm.factory import get_llm_provider
 router = APIRouter(prefix="/api", tags=["Planning"])
 
 @router.post("/plan", response_model=DailyPlanResponse)
-async def generate_daily_plan(request: DailyPlanRequest):
+async def generate_daily_plan(request: DailyPlanRequest) -> DailyPlanResponse:
+    """
+    Generates a personalized 3-section daily action plan:
+      1. Low-emission daily routines
+      2. Indoor air quality hacks
+      3. Sustainable alternatives tailored to location & lifestyle
+      
+    Includes deterministic before-vs-after impact calculations and RAG-grounded health advice.
+    """
     city = request.city or "Delhi"
     aqi_data = await fetch_air_quality(city)
     
-    # RAG Context Retrieval
+    # RAG Context Retrieval grounded in clinical guides
     query = f"daily air pollution plan routines safe window indoor ventilation {city}"
     if request.household and request.household.members:
-        sensitivities = []
+        sensitivities: list[str] = []
         for m in request.household.members:
             sensitivities.extend(m.sensitivities)
         if sensitivities:

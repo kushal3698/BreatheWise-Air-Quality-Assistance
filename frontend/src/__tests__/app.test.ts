@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { I18N_DATA, SupportedLanguage } from '../lib/i18n';
-import { getCityPresetAQI, calculateCPCB_AQI } from '../lib/initialData';
+import { getCityPresetAQI, getCityPresetPlan, calculateCPCB_AQI } from '../lib/initialData';
 
 describe('BreatheWise Application Core Logic', () => {
   it('supports all required Indian languages', () => {
@@ -15,10 +15,10 @@ describe('BreatheWise Application Core Logic', () => {
     });
   });
 
-  it('calculates official CPCB AQI correctly with 61 lower breakpoint for PM2.5 and max over pollutants', () => {
-    // PM2.5 = 60.1 -> sub-index 98 (using 61-90 official band), PM10 = 118.3 -> 113
+  it('calculates official CPCB AQI correctly with integer rounding (PM2.5 60.1 -> 100, PM10 118.3 -> 113)', () => {
+    // PM2.5 = 60.1 -> sub-index 100 after integer rounding, PM10 = 118.3 -> 113
     const res = calculateCPCB_AQI(60.1, 118.3);
-    expect(res.subIndices.pm2_5).toBe(98);
+    expect(res.subIndices.pm2_5).toBe(100);
     expect(res.subIndices.pm10).toBe(113);
     expect(res.aqi).toBe(113);
     expect(res.category).toBe('Moderate');
@@ -73,6 +73,43 @@ describe('BreatheWise Application Core Logic', () => {
     expect(delhi.safe_windows.length).toBeGreaterThan(0);
     const win = delhi.safe_windows[0];
     expect(win.guidance).toContain('Lowest forecast AQI today');
+    // Window start matches afternoon dispersion
+    expect(win.start).toBe('13:30');
+    expect(win.end).toBe('16:30');
+  });
+
+  it('tailors transit alternatives by city type: Guntur does not claim metro while Delhi does', () => {
+    const delhiPlan = getCityPresetPlan('Delhi');
+    const gunturPlan = getCityPresetPlan('Guntur');
+
+    const delhiRoutines = delhiPlan.sections.low_emission_routines.map(a => a.action.toLowerCase()).join(' ');
+    const gunturRoutines = gunturPlan.sections.low_emission_routines.map(a => a.action.toLowerCase()).join(' ');
+
+    expect(delhiRoutines).toContain('metro');
+    expect(gunturRoutines).not.toContain('metro');
+    expect(gunturRoutines).toMatch(/bus|shared transit|carpool/);
+  });
+
+  it('adjusts indoor air hacks based on air purifier ownership in household', () => {
+    const withoutPurifier = getCityPresetPlan('Delhi', {
+      members: [],
+      transport: { mode: 'petrol_car', vehicles: 1, school_run_km: 4, commute_km: 15 },
+      home: { type: 'apartment', floor: 2, has_purifier: false, cooking_fuel: 'LPG' },
+      work_from_home_days: 2
+    });
+
+    const withPurifier = getCityPresetPlan('Delhi', {
+      members: [],
+      transport: { mode: 'petrol_car', vehicles: 1, school_run_km: 4, commute_km: 15 },
+      home: { type: 'apartment', floor: 2, has_purifier: true, cooking_fuel: 'LPG' },
+      work_from_home_days: 2
+    });
+
+    const noPurifierHacks = withoutPurifier.sections.indoor_air_hacks.map(h => h.action).join(' ');
+    const withPurifierHacks = withPurifier.sections.indoor_air_hacks.map(h => h.action).join(' ');
+
+    expect(noPurifierHacks).toContain('DIY Corsi-Rosenthal');
+    expect(withPurifierHacks).toContain('Run bedroom HEPA');
   });
 
   it('generates consistent procedural data for unknown cities with diurnal peaks and even 2h ticks', () => {

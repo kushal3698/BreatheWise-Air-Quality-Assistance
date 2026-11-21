@@ -16,10 +16,10 @@ describe('CPCB National Air Quality Index (NAQI) Breakpoint Engine', () => {
     expect(res.category).toBe('Satisfactory');
   });
 
-  it('correctly maps Moderate band (101-200) with official 61 lower breakpoint', () => {
-    // PM2.5 = 60.1 -> 98, PM10 = 118.3 -> 113 => AQI = 113 Moderate
+  it('correctly maps Moderate band (101-200) with official integer rounding (PM10 118.3 gives 113, PM2.5 60.1 gives 100)', () => {
+    // PM2.5 = 60.1 -> 100 after integer rounding, PM10 = 118.3 -> 113 => AQI = 113 Moderate
     const res = calculateCPCB_AQI(60.1, 118.3);
-    expect(res.subIndices.pm2_5).toBe(98);
+    expect(res.subIndices.pm2_5).toBe(100);
     expect(res.subIndices.pm10).toBe(113);
     expect(res.aqi).toBe(113);
     expect(res.category).toBe('Moderate');

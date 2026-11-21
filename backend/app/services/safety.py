@@ -1,16 +1,31 @@
 from typing import List, Optional
 from app.models.schemas import HouseholdProfile
 
-STANDARD_DISCLAIMER = "Estimates for awareness only. BreatheWise is a decision-support tool, not a medical device. For breathing difficulty, chest pain, or acute symptoms, consult a qualified physician immediately."
+STANDARD_DISCLAIMER: str = (
+    "Estimates for awareness only. BreatheWise is a decision-support tool, not a medical device. "
+    "For breathing difficulty, chest pain, or acute symptoms, consult a qualified physician immediately."
+)
 
 def get_safety_cautions(
     aqi: int,
     category: str,
     household: Optional[HouseholdProfile] = None
 ) -> List[str]:
+    """
+    Evaluates health and vulnerability guardrails based on ambient AQI and household demographics.
+
+    Args:
+        aqi: Current or forecast CPCB AQI value (0-500).
+        category: CPCB category label ('Good', 'Moderate', 'Poor', 'Very Poor', 'Severe').
+        household: Optional profile detailing vulnerable members (children, elderly, asthma/COPD).
+
+    Returns:
+        List of actionable clinical precautions and safety warnings.
+        Guarantees that an asthma caution banner is ALWAYS included if a sensitive member is present.
+    """
     cautions: List[str] = []
     
-    # 1. AQI Level Checks
+    # 1. AQI Tier Checks
     if aqi >= 400:
         cautions.append("CRITICAL: Severe smog episode. Ground-level pollutants are dangerous to all individuals. Keep all outdoor activity suspended.")
     elif aqi >= 300:
@@ -27,6 +42,7 @@ def get_safety_cautions(
         has_child = any(m.role.lower() == "child" or m.age < 12 for m in household.members)
         has_elderly = any(m.role.lower() == "elderly" or m.age >= 65 for m in household.members)
         
+        # Guardrail: Asthma caution ALWAYS appears regardless of AQI if a sensitive member is in the household
         if has_asthma:
             cautions.append("One or more household members have respiratory sensitivities (asthma/COPD): Keep prescribed fast-acting reliever inhalers within immediate reach.")
         if has_child and aqi > 200:

@@ -4,12 +4,22 @@
 
 > **"Create a GenAI-powered assistant that helps families and communities navigate severe winter smog and urban air pollution. The application should suggest low-emission daily routines, indoor air quality hacks, and sustainable alternatives tailored to their location and lifestyle, while clearly explaining the direct impact of their choices."**
 
+![BreatheWise Dashboard Presentation](docs/assets/thumbnail.jpg)
+
 [![CI / CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20Passing-2ea44f?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-A%2B%20(100%2F100)-blue?style=for-the-badge)](frontend/src)
-[![Tests Passing](https://img.shields.io/badge/Tests-32%20Passed%20(100%25)-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-38%20Passed%20(100%25)-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/WCAG%202.1-AA%20Compliant-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security Policy](https://img.shields.io/badge/Security-Enforced%20(A%2B)-red?style=for-the-badge)](SECURITY.md)
+
+---
+
+### ⚡ Quick Requirement Mapping
+- **Low-Emission Routines** $\rightarrow$ Daily Action Plan Card 1 (`PlanCard.tsx`) & Diurnal Forecast (`SafeWindows.tsx`).
+- **Indoor Air Quality Hacks** $\rightarrow$ Daily Action Plan Card 2 (`PlanCard.tsx`) & RAG Knowledge Base (`indoor_air_quality.md`).
+- **Sustainable Alternatives** $\rightarrow$ Household Drawer (`HouseholdSelector.tsx`) & Transit Whitelist (`initialData.ts`).
+- **Direct Impact Explained** $\rightarrow$ Quantified Impact Engine (`ImpactBar.tsx`) with transparent "Why this matters" rationales.
 
 ---
 
@@ -23,6 +33,7 @@
 - [⚡ Quick Start & Deployment](#-quick-start--deployment)
 - [📡 API Reference](#-api-reference)
 - [🧮 Mathematical Engine & CPCB Breakpoints](#-mathematical-engine--cpcb-breakpoints)
+- [📡 Data Sources & Limitations](#-data-sources--limitations)
 - [🧪 Automated Testing & CI/CD](#-automated-testing--cicd)
 - [♿ Accessibility (WCAG 2.1 AA)](#-accessibility-wcag-21-aa)
 - [🔒 Security & Threat Modeling](#-security--threat-modeling)
@@ -97,9 +108,9 @@ Urban air pollution across Indian cities—especially during severe winter tempe
 flowchart TD
     subgraph Client["🖥️ Client Layer (Next.js 14 + Tailwind CSS)"]
         UI["Web Dashboard (Desktop / Mobile)"]
+        NAV["Navbar & Autocomplete City Search"]
         A11Y["WCAG 2.1 AA Semantic Landmarks & ARIA Tabs"]
         I18N["Multi-Language Engine (EN, HI, TE, TA)"]
-        STORE["Local Storage & Client State Cache"]
     end
 
     subgraph Serverless["⚡ Next.js API Routes (Vercel Serverless)"]
@@ -110,7 +121,7 @@ flowchart TD
     end
 
     subgraph Backend["🐍 FastAPI Backend (Python 3.11+)"]
-        API_GW["FastAPI Core with Security Headers Middleware"]
+        API_GW["FastAPI Core with Security Headers & Rate Limiting"]
         AQ_SVC["Air Quality & Diurnal Forecaster"]
         RAG_SVC["RAG Document Retriever (TF-IDF / Vector)"]
         IMPACT_SVC["Deterministic Impact Calculator"]
@@ -121,10 +132,10 @@ flowchart TD
     subgraph Data["📂 Data & Knowledge Bases"]
         KB["Markdown Health Guides (indoor_air, masks, exercise)"]
         EMISSIONS["emission_factors.json & exposure_assumptions.json"]
-        GEO["30+ Offline Indian Cities Database"]
+        GEO["30+ Pre-Calibrated Indian Cities Database"]
     end
 
-    UI --> ROUTE_AQI & ROUTE_PLAN & ROUTE_CHAT & ROUTE_COMM
+    UI --> NAV --> ROUTE_AQI & ROUTE_PLAN & ROUTE_CHAT & ROUTE_COMM
     ROUTE_AQI --> AQ_SVC
     ROUTE_PLAN --> IMPACT_SVC & SAFETY_SVC
     ROUTE_CHAT --> RAG_SVC --> LLM_SVC
@@ -144,8 +155,8 @@ BreatheWise-Air-Quality-Assistance/
 │       └── ci.yml                   # Automated GitHub Actions CI (Frontend & Backend)
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                  # FastAPI app with HTTP security headers middleware
-│   │   ├── config.py                # Pydantic BaseSettings & environment configs
+│   │   ├── main.py                  # FastAPI app with HTTP security headers & rate limiting
+│   │   ├── config.py                # Pydantic BaseSettings, named constants & CORS origins
 │   │   ├── routers/
 │   │   │   ├── aqi.py               # GET  /api/aqi (CPCB telemetry & forecast)
 │   │   │   ├── plan.py              # POST /api/plan (Household daily action plan)
@@ -160,19 +171,21 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── rag.py               # Knowledge base retrieval & document indexing
 │   │   │   ├── safety.py            # Medical disclaimer & asthma safety rules
 │   │   │   └── llm/                 # Gemini 1.5 Flash & Demo providers
-│   │   ├── models/schemas.py        # Pydantic validation models
+│   │   ├── models/schemas.py        # Pydantic validation models with input limits
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
-│   ├── tests/                       # Pytest test suite (12 tests passing)
+│   ├── tests/                       # Pytest test suite (15 tests passing)
 │   └── requirements.txt             # Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── layout.tsx           # Root HTML layout with skip-to-content anchor
-│   │   │   ├── page.tsx             # Interactive dashboard with ARIA tablist
+│   │   │   ├── page.tsx             # Modular dashboard with ARIA tablist
 │   │   │   ├── globals.css          # Tailwind directives
 │   │   │   └── api/                 # Next.js Serverless API routes (aqi, chat, plan, community)
 │   │   ├── components/
+│   │   │   ├── Navbar.tsx           # Extracted sticky top navigation & instant search
+│   │   │   ├── Footer.tsx           # Extracted accessible disclaimer footer
 │   │   │   ├── RiskMeter.tsx        # 6-band CPCB gauge with synchronized marker & getAQIBand
 │   │   │   ├── SafeWindows.tsx      # Diurnal safe window cards with thermal mixing rationale
 │   │   │   ├── ForecastChart.tsx    # 24-hr CPCB AQI diurnal chart with 2h tick intervals
@@ -186,13 +199,14 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── api.ts               # Resilient client API functions
 │   │   │   ├── initialData.ts       # 30+ city presets & CPCB NAQI calculations
 │   │   │   └── i18n.ts              # English, Hindi, Telugu, Tamil translations
-│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n (20 tests)
+│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n (23 tests)
 │   ├── next.config.js               # Strict HTTP security headers (HSTS, CSP, X-Frame)
 │   ├── package.json                 # Next.js 14 & dependencies
 │   └── tailwind.config.js           # Tailwind CSS configuration
 ├── docs/assets/
 │   └── thumbnail.jpg                # 16:9 Presentation thumbnail
 ├── .env.example                     # Environment template (zero committed secrets)
+├── CONTRIBUTING.md                  # Code style, testing, and contribution guide
 ├── SECURITY.md                      # Formal security policy & threat model
 ├── LICENSE                          # MIT License
 └── README.md                        # Documentation & requirement matrix
@@ -215,7 +229,6 @@ Starts both the FastAPI backend and Next.js frontend and opens `http://localhost
 ```bash
 cd backend
 python -m venv .venv
-# Activate virtual environment:
 # Windows: .\.venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
@@ -286,33 +299,49 @@ $$I_p = I_{\text{lo}} + \frac{I_{\text{hi}} - I_{\text{lo}}}{B_{\text{hi}} - B_{
 
 ---
 
+## 📡 Data Sources & Limitations
+
+### 1. Telemetry Transparency
+- **Live CPCB Telemetry**: For stations where direct telemetry is available, the UI prominently marks metrics with `● Live Station`.
+- **Modelled Estimates**: When physical CAAQMS stations are beyond direct proximity, metrics are sourced from European Centre for Medium-Range Weather Forecasts (ECMWF) via Open-Meteo, satellite aerosol optical depth (AOD), and procedural diurnal boundary layer modeling. The application prominently displays:
+  > `● Modelled estimate • Regional estimate for {City} • Street level exposures vary with local traffic.`
+
+### 2. CPCB Integer Rounding Protocol
+Under official Indian Central Pollution Control Board reporting conventions, ambient sensor concentrations are evaluated against integer breakpoint bands:
+- An observed $\text{PM}_{2.5}$ of $60.1\ \mu\text{g/m}^3$ rounds to $60\ \mu\text{g/m}^3$, which sits at the upper limit of the Satisfactory band ($31\text{–}60$), yielding an exact sub-index of **100**.
+- An observed $\text{PM}_{10}$ of $118.3\ \mu\text{g/m}^3$ in the Moderate band ($101\text{–}250 \rightarrow 101\text{–}200$) yields a sub-index of **113**.
+- The composite AQI is $\max(100, 113) = \mathbf{113\ (\text{Moderate})}$, with **Dominant Pollutant: $\text{PM}_{10}$**.
+
+---
+
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **32 automated tests** across both frontend and backend suites, fully integrated into GitHub Actions:
+BreatheWise maintains **38 automated tests** across frontend and backend suites, integrated into GitHub Actions with code coverage tracking:
 
 ```bash
-# Frontend Tests (Vitest — 20 passed)
+# Frontend Tests (Vitest — 23 passed)
 cd frontend
 npm test -- --run
 
-# Backend Tests (Pytest — 12 passed)
+# Backend Tests (Pytest with Coverage — 15 passed)
 python -m pytest backend/tests -v
 ```
 
 ### GitHub Actions CI Workflow (`.github/workflows/ci.yml`)
-- **`frontend-ci`**: Node 20 environment, dependency caching, Vitest execution, and full production build verification.
-- **`backend-ci`**: Python 3.11 environment, Pytest execution across schemas, safety rules, and CPCB algorithms.
+- **`frontend-ci`**: Node 20 environment, dependency caching, Vitest execution, and production build verification.
+- **`backend-ci`**: Python 3.11 environment, Pytest execution with coverage across schemas, safety rules, and CPCB algorithms.
 - **`security-audit`**: Automated secret scanning ensuring zero credentials exist in version control.
 
 ---
 
 ## ♿ Accessibility (WCAG 2.1 AA)
 
-BreatheWise is designed for inclusive, universal access:
+BreatheWise is designed for inclusive access:
 - **Skip to Main Content**: Keyboard-accessible anchor (`#main-content`) allows screen reader and keyboard users to bypass navigation.
 - **ARIA Semantics**: Proper `role="tablist"`, `role="tab"`, `aria-selected`, `role="status"`, `aria-live="polite"`, and `role="search"` attributes throughout.
 - **Contrast Ratios**: Color palettes for all 6 CPCB bands exceed the WCAG 4.5:1 minimum contrast ratio.
 - **Screen Reader Support**: Decorative icons feature `aria-hidden="true"`, while interactive inputs provide explicit `aria-label` tags.
+- **Multi-Language Tagging**: Main content containers carry explicit `lang` attributes (`en`, `hi`, `te`, `ta`) so screen readers select correct voice engines.
 
 ---
 
@@ -320,7 +349,9 @@ BreatheWise is designed for inclusive, universal access:
 
 BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURITY.md)):
 - **HTTP Security Headers**: Enforces `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection: 1; mode=block`, and restrictive `Permissions-Policy`.
-- **Input Sanitization**: City parameters scrubbed with regex `/[^a-zA-Z0-9\s()\-]/g` and payload lengths restricted.
+- **In-Memory Rate Limiting**: Enforces a 120 requests/minute ceiling per client IP with `429 Too Many Requests` responses.
+- **Input Sanitization**: City parameters scrubbed with regex `/[^a-zA-Z0-9\s()\-]/g` and chat queries capped at 1,000 characters.
+- **Stack Trace Suppression**: Generic 500 error handler prevents exposure of internal exception traces.
 - **Zero Committed Secrets**: `.env.example` template provided; offline simulation operates seamlessly without requiring external credentials.
 
 ---
@@ -328,7 +359,7 @@ BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURIT
 ## 🛡️ Responsible AI & Medical Safeguards
 
 1. **Non-Medical Disclaimer**: BreatheWise is a decision-support and awareness platform, not a medical diagnosis device. Disclaimers are prominently displayed.
-2. **Asthma & Vulnerability Triggers**: Immediate alerts whenever sensitive members are present or AQI enters unhealthy categories.
+2. **Asthma & Vulnerability Triggers**: Immediate alerts whenever sensitive members are present (inhaler caution always displayed) or AQI enters unhealthy categories.
 3. **Deterministic Math**: Impact figures are computed mathematically rather than generated by LLMs to eliminate numerical hallucinations.
 
 ---
