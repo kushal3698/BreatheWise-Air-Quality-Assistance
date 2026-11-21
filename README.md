@@ -86,7 +86,7 @@ The brief asks for help during **severe winter smog**. BreatheWise treats winter
 |:---|:---|:---|
 | Morning inversion peak | Diurnal curve shows the morning peak; plan advises keeping intense cardio indoors until air improves | `ForecastChart.tsx`, `PlanCard.tsx` |
 | Cleaner afternoon window | Safe Windows derived from the afternoon thermal-mixing dip | `SafeWindows.tsx` |
-| Polluted air getting indoors | Seal windows at the morning peak, ventilate in the safe window, run a HEPA purifier or DIY Corsi-Rosenthal box | `PlanCard.tsx`, `indoor_air_quality.md` |
+| Polluted air getting indoors | Seal windows at the morning peak, ventilate in the safe window, run a HEPA purifier or DIY Corsi-Rosenthal box | Indoor Air Playbook |
 | Open burning | Zero Open-Burning Vigilance community challenge | `CommunityView.tsx` |
 | Vulnerable people | Asthma caution banner for sensitive members; school protocols for assembly, PE and recess | `safety.py`, `SchoolView.tsx` |
 
@@ -152,7 +152,7 @@ flowchart TD
         RAG_SVC["RAG Document Retriever (TF-IDF / Vector)"]
         IMPACT_SVC["Deterministic Impact Calculator"]
         SAFETY_SVC["Responsible AI & Medical Guardrails"]
-        LLM_SVC["Gemini 2.5 Flash / Demo Provider"]
+        LLM_SVC["Gemini 2.0 Flash / Demo Provider"]
     end
 
     subgraph Data["📂 Data & Knowledge Bases"]
@@ -170,7 +170,7 @@ flowchart TD
     RAG_SVC --> KB
 ```
 
-> **Live Deployment Note:** On the live Vercel deployment, `/api/chat`, `/api/aqi`, and `/api/plan` run via lightweight Next.js serverless functions with complete offline pre-calibrated telemetry and grounded rule-based responses (proxying to Gemini 2.5 Flash when `GEMINI_API_KEY` is provided). The standalone FastAPI service powers local Python development and containerized Docker setups.
+> **Live Deployment Note:** On the live Vercel deployment, `/api/chat`, `/api/aqi`, and `/api/plan` run via lightweight Next.js serverless functions with complete offline pre-calibrated telemetry and grounded rule-based responses (proxying to Gemini 2.0 Flash when `GEMINI_API_KEY` is provided). The standalone FastAPI service powers local Python development and containerized Docker setups.
 
 ---
 
@@ -198,7 +198,7 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── impact.py            # Mathematical exposure, CO2, and INR calculator
 │   │   │   ├── rag.py               # Knowledge base retrieval & document indexing
 │   │   │   ├── safety.py            # Medical disclaimer & asthma safety rules
-│   │   │   └── llm/                 # Gemini 2.5 Flash & Demo providers
+│   │   │   └── llm/                 # Gemini 2.0 Flash & Demo providers
 │   │   ├── models/schemas.py        # Pydantic validation models with input limits
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
@@ -255,6 +255,11 @@ BreatheWise-Air-Quality-Assistance/
 Starts both the FastAPI backend and Next.js frontend and opens `http://localhost:3000` in your browser.
 
 ### 2. Manual Terminal Setup
+
+```bash
+# 1. Initialize environment variables from template
+cp .env.example .env
+```
 
 #### Backend Setup
 ```bash
@@ -374,9 +379,9 @@ All environment variables have sensible defaults and fallback to complete offlin
 |:---|:---|:---|
 | `DEMO_MODE` | `true` | When true, serves pre-calibrated offline telemetry for 30+ Indian cities. |
 | `DEFAULT_CITY` | `Delhi` | Fallback city on initial launch. |
-| `LLM_PROVIDER` | `gemini` | `gemini` (Gemini 2.5 Flash) or `demo` (offline RAG generator). |
+| `LLM_PROVIDER` | `gemini` | `gemini` (Gemini 2.0 Flash) or `demo` (offline RAG generator). |
 | `GEMINI_API_KEY` | `""` | Optional Google AI Studio API key for conversational chat. |
-| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model identifier. |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model identifier. |
 | `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Whitelisted cross-origin request sources. |
 | `RATE_LIMIT_RPM` | `120` | Maximum requests permitted per minute per client IP. |
 

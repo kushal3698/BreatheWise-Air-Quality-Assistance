@@ -644,7 +644,7 @@ export const CITY_PRESETS: Record<string, AirQualityData> = {
 
 // Search directory for instant autocomplete
 export const ALL_SEARCHABLE_CITIES: CityDirectoryItem[] = [
-  { name: "Delhi", state: "Delhi NCR", aqi: 428, cat: "Severe", color: "#8e44ad" },
+  { name: "Delhi", state: "Delhi NCR", aqi: 345, cat: "Very Poor", color: "#e74c3c" },
   { name: "Guntur", state: "Andhra Pradesh", aqi: 118, cat: "Moderate", color: "#f39c12" },
   { name: "Bengaluru", state: "Karnataka", aqi: 82, cat: "Satisfactory", color: "#27ae60" },
   { name: "Mumbai", state: "Maharashtra", aqi: 165, cat: "Moderate", color: "#f39c12" },
