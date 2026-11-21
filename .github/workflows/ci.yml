@@ -28,7 +28,7 @@ jobs:
         run: npm ci || npm install
 
       - name: Run Frontend Vitest Suite
-        run: npm test -- --run
+        run: npm test
 
       - name: Build Next.js Production Bundle
         run: npm run build
@@ -66,4 +66,4 @@ jobs:
 
       - name: Verify No Secrets Committed
         run: |
-          ! grep -rn "AIzaSy" . --exclude-dir={.git,node_modules,.next,.venv}
+          ! git grep -E "AIza[0-9A-Za-z-_]{35}" -- ':!.github'
