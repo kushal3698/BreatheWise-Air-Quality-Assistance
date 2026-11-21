@@ -286,15 +286,15 @@ export default function HomePage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg text-slate-900 tracking-tight">BreatheWise</span>
-                {isLiveConnected && aqiData.source !== 'demo_fallback' ? (
+                {isLiveConnected && aqiData.source === 'live_cpcb_station' ? (
                   <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                    Live API
+                    Live Station
                   </span>
                 ) : (
                   <span className="text-[10px] bg-amber-50 text-amber-800 font-semibold px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    Estimated
+                    Modelled estimate
                   </span>
                 )}
               </div>
@@ -591,7 +591,7 @@ export default function HomePage() {
           <div key={city} className="space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             <RiskMeter 
               data={aqiData} 
-              isLive={isLiveConnected && aqiData.source !== 'demo_fallback' && aqiData.source !== 'open-meteo / CPCB'} 
+              isLive={isLiveConnected && aqiData.source === 'live_cpcb_station'} 
             />
 
             {/* Safe Windows Highlight */}
