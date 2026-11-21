@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
 export interface AirQualityLocation {
   name: string;
@@ -23,6 +23,10 @@ export interface CurrentAQI {
   so2?: number;
   co?: number;
   o3?: number;
+  dominant_pollutant?: {
+    name: string;
+    sub_index: number;
+  };
 }
 
 export interface WeatherInfo {

@@ -29,6 +29,21 @@ describe('BreatheWise Application Core Logic', () => {
     expect(multi.aqi).toBe(multi.subIndices.no2);
   });
 
+  it('correctly calculates Delhi headline CPCB AQI as max(sub-indices) = 428 Severe', () => {
+    const res = calculateCPCB_AQI(178.4, 288.0, 45.2, 14.8, 1.9, 28.5);
+    expect(res.subIndices.pm2_5).toBe(428);
+    expect(res.subIndices.pm10).toBe(338);
+    expect(res.subIndices.no2).toBe(56);
+    expect(res.aqi).toBe(428);
+    expect(res.category).toBe('Severe');
+    expect(res.dominantPollutant.name).toBe('PM2.5');
+    expect(res.dominantPollutant.subIndex).toBe(428);
+
+    const delhi = getCityPresetAQI('Delhi');
+    expect(delhi.current.aqi).toBe(428);
+    expect(delhi.current.category).toBe('Severe');
+  });
+
   it('demonstrates realistic diurnal atmospheric pattern with strictly even 2-hour intervals', () => {
     const delhi = getCityPresetAQI('Delhi');
     expect(delhi.forecast).toBeDefined();

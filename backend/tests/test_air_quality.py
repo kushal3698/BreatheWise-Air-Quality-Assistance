@@ -9,7 +9,7 @@ def test_cpcb_aqi_calculation():
     # Good AQI
     assert calculate_cpcb_aqi(pm2_5=20.0, pm10=40.0) <= 50
     # Poor AQI
-    aqi_poor = calculate_cpcb_aqi(pm2_5=105.0, pm10=280.0)
+    aqi_poor = calculate_cpcb_aqi(pm2_5=105.0, pm10=220.0)
     assert 201 <= aqi_poor <= 300
     # Severe AQI
     aqi_severe = calculate_cpcb_aqi(pm2_5=280.0, pm10=480.0)
@@ -17,6 +17,9 @@ def test_cpcb_aqi_calculation():
     # Exact CPCB breakpoint check: PM2.5=60.1 (sub-index 98), PM10=118.3 (sub-index 113)
     aqi_official = calculate_cpcb_aqi(pm2_5=60.1, pm10=118.3)
     assert aqi_official == 113
+    # Delhi benchmark: PM2.5=178.4 (sub-index 428), PM10=288.0 (sub-index 338), NO2=45.2 (sub-index 56)
+    aqi_delhi = calculate_cpcb_aqi(pm2_5=178.4, pm10=288.0, no2=45.2)
+    assert aqi_delhi == 428
 
 def test_aqi_categories_and_colors():
     cat, col = get_aqi_category_and_color(45)

@@ -589,7 +589,10 @@ export default function HomePage() {
         {/* TAB 1: AIR DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div key={city} className="space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
-            <RiskMeter data={aqiData} />
+            <RiskMeter 
+              data={aqiData} 
+              isLive={isLiveConnected && aqiData.source !== 'demo_fallback' && aqiData.source !== 'open-meteo / CPCB'} 
+            />
 
             {/* Safe Windows Highlight */}
             <SafeWindows safeWindows={aqiData.safe_windows} />

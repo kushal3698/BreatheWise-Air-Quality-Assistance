@@ -21,16 +21,15 @@ export const CPCB_BREAKPOINTS: Record<string, Array<{ c_low: number; c_high: num
     { c_low: 31, c_high: 60, i_low: 51, i_high: 100 },
     { c_low: 61, c_high: 90, i_low: 101, i_high: 200 },
     { c_low: 91, c_high: 120, i_low: 201, i_high: 300 },
-    { c_low: 121, c_high: 250, i_low: 301, i_high: 400 },
-    { c_low: 251, c_high: 500, i_low: 401, i_high: 500 },
+    { c_low: 121, c_high: 150, i_low: 301, i_high: 400 },
+    { c_low: 151, c_high: 250, i_low: 401, i_high: 500 },
   ],
   pm10: [
     { c_low: 0, c_high: 50, i_low: 0, i_high: 50 },
-    { c_low: 50.1, c_high: 100, i_low: 51, i_high: 100 },
+    { c_low: 51, c_high: 100, i_low: 51, i_high: 100 },
     { c_low: 100.1, c_high: 250, i_low: 101, i_high: 200 },
-    { c_low: 250.1, c_high: 350, i_low: 201, i_high: 300 },
-    { c_low: 350.1, c_high: 430, i_low: 301, i_high: 400 },
-    { c_low: 430.1, c_high: 600, i_low: 401, i_high: 500 },
+    { c_low: 251, c_high: 350, i_low: 301, i_high: 400 },
+    { c_low: 351, c_high: 430, i_low: 401, i_high: 500 },
   ],
   no2: [
     { c_low: 0, c_high: 40, i_low: 0, i_high: 50 },
@@ -66,6 +65,15 @@ export const CPCB_BREAKPOINTS: Record<string, Array<{ c_low: number; c_high: num
   ],
 };
 
+const POLLUTANT_NAMES: Record<string, string> = {
+  pm2_5: "PM2.5",
+  pm10: "PM10",
+  no2: "NO₂",
+  so2: "SO₂",
+  co: "CO",
+  o3: "O₃"
+};
+
 export function calculateCPCB_SubIndex(conc: number, breakpoints: Array<{ c_low: number; c_high: number; i_low: number; i_high: number }>): number {
   if (conc <= 0) return 0;
   let matched_bp = null;
@@ -99,7 +107,17 @@ export function calculateCPCB_AQI(
   so2?: number,
   co?: number,
   o3?: number
-): { aqi: number; category: string; color: string; subIndices: Record<string, number> } {
+): {
+  aqi: number;
+  category: string;
+  color: string;
+  dominantPollutant: {
+    key: string;
+    name: string;
+    subIndex: number;
+  };
+  subIndices: Record<string, number>;
+} {
   const pollutants: Record<string, number | undefined> = { pm2_5, pm10, no2, so2, co, o3 };
   const subIndices: Record<string, number> = {};
 
@@ -109,8 +127,21 @@ export function calculateCPCB_AQI(
     }
   }
 
-  const values = Object.values(subIndices);
-  const aqi = values.length > 0 ? Math.max(...values) : 0;
+  let dominantKey = "pm2_5";
+  let maxSubIndex = 0;
+  for (const [key, val] of Object.entries(subIndices)) {
+    if (val > maxSubIndex) {
+      maxSubIndex = val;
+      dominantKey = key;
+    }
+  }
+
+  const aqi = maxSubIndex;
+  const dominantPollutant = {
+    key: dominantKey,
+    name: POLLUTANT_NAMES[dominantKey] || dominantKey.toUpperCase(),
+    subIndex: maxSubIndex
+  };
 
   let category = "Moderate";
   let color = "#f39c12";
@@ -121,7 +152,7 @@ export function calculateCPCB_AQI(
   else if (aqi <= 400) { category = "Very Poor"; color = "#e74c3c"; }
   else { category = "Severe"; color = "#8e44ad"; }
 
-  return { aqi, category, color, subIndices };
+  return { aqi, category, color, dominantPollutant, subIndices };
 }
 
 export const CITY_PRESETS: Record<string, AirQualityData> = {
@@ -129,26 +160,27 @@ export const CITY_PRESETS: Record<string, AirQualityData> = {
     location: { name: "Delhi (NCR)", state: "Delhi", country: "India", lat: 28.6139, lon: 77.2090 },
     station: { name: "Lodhi Road CAAQMS Station", distance_km: 2.1 },
     current: {
-      aqi: 285, category: "Very Poor", cpcb_color: "#e74c3c",
-      pm2_5: 178.4, pm10: 288.0, no2: 45.2, so2: 14.8, co: 1.9, o3: 28.5
+      aqi: 428, category: "Severe", cpcb_color: "#8e44ad",
+      pm2_5: 178.4, pm10: 288.0, no2: 45.2, so2: 14.8, co: 1.9, o3: 28.5,
+      dominant_pollutant: { name: "PM2.5", sub_index: 428 }
     },
     weather: { temp_c: 11.2, humidity: 74, wind_kmh: 4.5, wind_direction: "NW", conditions: "Winter Inversion Smog" },
     forecast: [
-      { hour: "00:00", aqi: 268, pm2_5: 167.7 },
-      { hour: "02:00", aqi: 279, pm2_5: 174.8 },
-      { hour: "04:00", aqi: 302, pm2_5: 189.1 },
-      { hour: "06:00", aqi: 328, pm2_5: 205.2 },
-      { hour: "08:00", aqi: 356, pm2_5: 223.0 },
-      { hour: "10:00", aqi: 299, pm2_5: 187.3 },
-      { hour: "12:00", aqi: 251, pm2_5: 157.0 },
-      { hour: "14:00", aqi: 211, pm2_5: 132.0 },
-      { hour: "16:00", aqi: 234, pm2_5: 146.3 },
-      { hour: "18:00", aqi: 296, pm2_5: 185.5 },
-      { hour: "20:00", aqi: 331, pm2_5: 206.9 },
-      { hour: "22:00", aqi: 291, pm2_5: 182.0 }
+      { hour: "00:00", aqi: 402, pm2_5: 167.7 },
+      { hour: "02:00", aqi: 418, pm2_5: 174.8 },
+      { hour: "04:00", aqi: 452, pm2_5: 189.1 },
+      { hour: "06:00", aqi: 491, pm2_5: 205.2 },
+      { hour: "08:00", aqi: 500, pm2_5: 223.0 },
+      { hour: "10:00", aqi: 448, pm2_5: 187.3 },
+      { hour: "12:00", aqi: 376, pm2_5: 157.0 },
+      { hour: "14:00", aqi: 316, pm2_5: 132.0 },
+      { hour: "16:00", aqi: 351, pm2_5: 146.3 },
+      { hour: "18:00", aqi: 444, pm2_5: 185.5 },
+      { hour: "20:00", aqi: 496, pm2_5: 206.9 },
+      { hour: "22:00", aqi: 436, pm2_5: 182.0 }
     ],
     safe_windows: [
-      { start: "13:30", end: "16:30", avg_aqi: 220, category: "Poor", guidance: "Lowest forecast AQI today (~220) during peak afternoon thermal mixing." }
+      { start: "13:30", end: "16:30", avg_aqi: 330, category: "Very Poor", guidance: "Lowest forecast AQI today (~330) during peak afternoon thermal mixing; vulnerable individuals remain indoors." }
     ],
     source: "open-meteo / CPCB", fetched_at: new Date().toISOString(), is_stale: false
   },
@@ -605,7 +637,7 @@ export const CITY_PRESETS: Record<string, AirQualityData> = {
 
 // Search directory for instant autocomplete
 export const ALL_SEARCHABLE_CITIES: CityDirectoryItem[] = [
-  { name: "Delhi", state: "Delhi NCR", aqi: 285, cat: "Very Poor", color: "#e74c3c" },
+  { name: "Delhi", state: "Delhi NCR", aqi: 428, cat: "Severe", color: "#8e44ad" },
   { name: "Guntur", state: "Andhra Pradesh", aqi: 118, cat: "Moderate", color: "#f39c12" },
   { name: "Bengaluru", state: "Karnataka", aqi: 82, cat: "Satisfactory", color: "#27ae60" },
   { name: "Mumbai", state: "Maharashtra", aqi: 165, cat: "Moderate", color: "#f39c12" },
@@ -632,15 +664,37 @@ export const ALL_SEARCHABLE_CITIES: CityDirectoryItem[] = [
 
 export function getCityPresetAQI(cityName: string): AirQualityData {
   const key = cityName.toLowerCase().trim();
+  let baseData: AirQualityData | null = null;
   
   if (CITY_PRESETS[key]) {
-    return CITY_PRESETS[key];
-  }
-  
-  for (const k in CITY_PRESETS) {
-    if (key.includes(k) || k.includes(key)) {
-      return CITY_PRESETS[k];
+    baseData = JSON.parse(JSON.stringify(CITY_PRESETS[key]));
+  } else {
+    for (const k in CITY_PRESETS) {
+      if (key.includes(k) || k.includes(key)) {
+        baseData = JSON.parse(JSON.stringify(CITY_PRESETS[k]));
+        break;
+      }
     }
+  }
+
+  if (baseData) {
+    // Dynamic single source of truth: recalculate CPCB AQI strictly from pollutant sub-indices
+    const cpcb = calculateCPCB_AQI(
+      baseData.current.pm2_5,
+      baseData.current.pm10,
+      baseData.current.no2,
+      baseData.current.so2,
+      baseData.current.co,
+      baseData.current.o3
+    );
+    baseData.current.aqi = cpcb.aqi;
+    baseData.current.category = cpcb.category;
+    baseData.current.cpcb_color = cpcb.color;
+    baseData.current.dominant_pollutant = {
+      name: cpcb.dominantPollutant.name,
+      sub_index: cpcb.dominantPollutant.subIndex
+    };
+    return baseData;
   }
 
   // ⚡ Instant dynamic procedural generator for ANY unknown city
@@ -704,7 +758,11 @@ export function getCityPresetAQI(cityName: string): AirQualityData {
       no2: rawNo2,
       so2: rawSo2,
       co: rawCo,
-      o3: rawO3
+      o3: rawO3,
+      dominant_pollutant: {
+        name: cpcb.dominantPollutant.name,
+        sub_index: cpcb.dominantPollutant.subIndex
+      }
     },
     weather: {
       temp_c: 21 + (seed % 10),

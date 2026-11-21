@@ -3,12 +3,14 @@
 import React from 'react';
 import { Wind, Droplets, Thermometer, MapPin, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { AirQualityData } from '@/lib/api';
+import { calculateCPCB_AQI } from '@/lib/initialData';
 
 interface RiskMeterProps {
   data: AirQualityData;
+  isLive?: boolean;
 }
 
-const CPCB_BANDS = [
+export const CPCB_BANDS = [
   { name: 'Good', min: 0, max: 50, color: '#2ecc71', bg: 'bg-emerald-500', range: '0–50' },
   { name: 'Satisfactory', min: 51, max: 100, color: '#27ae60', bg: 'bg-green-600', range: '51–100' },
   { name: 'Moderate', min: 101, max: 200, color: '#f39c12', bg: 'bg-amber-500', range: '101–200' },
@@ -17,24 +19,96 @@ const CPCB_BANDS = [
   { name: 'Severe', min: 401, max: 500, color: '#8e44ad', bg: 'bg-purple-600', range: '401–500' },
 ];
 
-export const RiskMeter: React.FC<RiskMeterProps> = ({ data }) => {
+export function getAQIBand(aqi: number) {
+  if (aqi <= 50) {
+    return {
+      idx: 0,
+      name: 'Good',
+      color: '#2ecc71',
+      bg: 'bg-emerald-500',
+      badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      range: '0–50',
+    };
+  }
+  if (aqi <= 100) {
+    return {
+      idx: 1,
+      name: 'Satisfactory',
+      color: '#27ae60',
+      bg: 'bg-green-600',
+      badgeClass: 'text-green-700 bg-green-50 border-green-200',
+      range: '51–100',
+    };
+  }
+  if (aqi <= 200) {
+    return {
+      idx: 2,
+      name: 'Moderate',
+      color: '#f39c12',
+      bg: 'bg-amber-500',
+      badgeClass: 'text-amber-800 bg-amber-50 border-amber-200',
+      range: '101–200',
+    };
+  }
+  if (aqi <= 300) {
+    return {
+      idx: 3,
+      name: 'Poor',
+      color: '#e67e22',
+      bg: 'bg-orange-500',
+      badgeClass: 'text-orange-800 bg-orange-50 border-orange-200',
+      range: '201–300',
+    };
+  }
+  if (aqi <= 400) {
+    return {
+      idx: 4,
+      name: 'Very Poor',
+      color: '#e74c3c',
+      bg: 'bg-red-500',
+      badgeClass: 'text-red-800 bg-red-50 border-red-200',
+      range: '301–400',
+    };
+  }
+  return {
+    idx: 5,
+    name: 'Severe',
+    color: '#8e44ad',
+    bg: 'bg-purple-600',
+    badgeClass: 'text-purple-900 bg-purple-50 border-purple-200',
+    range: '401–500',
+  };
+}
+
+export const RiskMeter: React.FC<RiskMeterProps> = ({ data, isLive = false }) => {
   const { current, station, location, weather } = data;
   const aqi = current.aqi;
 
-  const getTextColor = (val: number) => {
-    if (val <= 50) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-    if (val <= 100) return 'text-green-700 bg-green-50 border-green-200';
-    if (val <= 200) return 'text-amber-800 bg-amber-50 border-amber-200';
-    if (val <= 300) return 'text-orange-800 bg-orange-50 border-orange-200';
-    if (val <= 400) return 'text-red-800 bg-red-50 border-red-200';
-    return 'text-purple-900 bg-purple-50 border-purple-200';
-  };
-
-  const activeBandIdx = CPCB_BANDS.findIndex(b => aqi >= b.min && aqi <= b.max) !== -1
-    ? CPCB_BANDS.findIndex(b => aqi >= b.min && aqi <= b.max)
-    : (aqi > 500 ? 5 : 0);
+  const band = getAQIBand(aqi);
+  const activeBandIdx = band.idx;
 
   const markerPosition = Math.min(97, Math.max(3, (aqi / 500) * 100));
+
+  // Determine dominant pollutant
+  let dominantName = current.dominant_pollutant?.name;
+  let dominantSubIndex = current.dominant_pollutant?.sub_index;
+  if (!dominantName || !dominantSubIndex) {
+    const cpcb = calculateCPCB_AQI(
+      current.pm2_5,
+      current.pm10,
+      current.no2,
+      current.so2,
+      current.co,
+      current.o3
+    );
+    dominantName = cpcb.dominantPollutant.name;
+    dominantSubIndex = cpcb.dominantPollutant.subIndex;
+  }
+
+  // Reference area clean formatting for Estimated mode
+  const cleanRefArea = (station.name || 'Central')
+    .replace(/(CAAQMS|Continuous|Ambient|Air Monitoring|Monitoring|Station)/gi, '')
+    .trim();
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-all">
@@ -46,16 +120,25 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({ data }) => {
           {location.state && <span className="text-slate-400 text-sm">({location.state})</span>}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
-          <span>{station.name || 'Regional Airshed Model'}</span>
-          <span className="font-semibold text-slate-700">
-            • {station.distance_km > 0 ? `${station.distance_km} km away` : 'Modelled Estimate'}
-          </span>
+          {isLive && station.distance_km > 0 ? (
+            <>
+              <span>{station.name || 'Continuous Monitoring Station'}</span>
+              <span className="font-semibold text-slate-700">• {station.distance_km} km away</span>
+            </>
+          ) : (
+            <>
+              <span>Regional estimate for {location.name}</span>
+              <span className="font-semibold text-slate-700">
+                • Nearest reference: {cleanRefArea || 'Central'} area
+              </span>
+            </>
+          )}
         </div>
       </div>
 
       {/* Main AQI Meter Display */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 my-6 items-center">
-        {/* Left: AQI Number & Category */}
+        {/* Left: AQI Number, Category Badge & Dominant Pollutant */}
         <div className="md:col-span-5 flex flex-col items-center md:items-start text-center md:text-left">
           <div className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-1 flex items-center gap-1.5 flex-wrap">
             <span>Current Air Quality Index (CPCB)</span>
@@ -65,14 +148,24 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({ data }) => {
           </div>
           <div className="flex items-baseline gap-3">
             <span className="text-6xl font-extrabold tracking-tight text-slate-900">{aqi}</span>
-            <span className={`text-sm font-semibold px-3 py-1 rounded-full border ${getTextColor(aqi)}`}>
-              {current.category}
+            <span className={`text-sm font-semibold px-3 py-1 rounded-full border ${band.badgeClass}`}>
+              {band.name}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            {station.distance_km > 0 
-              ? `Air varies street to street. Monitor is ${station.distance_km} km away.` 
-              : 'Synthesized regional atmospheric estimate. Local roadside air varies street to street.'}
+
+          {/* Dominant Pollutant Line */}
+          <div className="flex items-center gap-1.5 mt-2.5 text-xs text-slate-600 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/70 inline-flex">
+            <span className="text-slate-500">Dominant pollutant:</span>
+            <strong className="text-slate-900 font-bold">{dominantName}</strong>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-500">Sub-index:</span>
+            <strong className="text-slate-900 font-bold">~{dominantSubIndex}</strong>
+          </div>
+
+          <p className="text-xs text-slate-500 mt-2.5">
+            {isLive && station.distance_km > 0
+              ? `Air varies street to street. Monitor is ${station.distance_km} km away.`
+              : `Regional atmospheric estimate for ${location.name}. Street-level exposures vary with local traffic.`}
           </p>
         </div>
 
@@ -92,12 +185,12 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({ data }) => {
 
             {/* Six Segmented Bands */}
             <div className="grid grid-cols-6 gap-1.5 h-4.5 p-0.5 bg-slate-100 rounded-xl border border-slate-200">
-              {CPCB_BANDS.map((band, idx) => {
+              {CPCB_BANDS.map((b, idx) => {
                 const isActive = idx === activeBandIdx;
                 return (
                   <div
-                    key={band.name}
-                    className={`h-full rounded-lg transition-all duration-300 relative ${band.bg} ${
+                    key={b.name}
+                    className={`h-full rounded-lg transition-all duration-300 relative ${b.bg} ${
                       isActive
                         ? 'ring-2 ring-slate-900 ring-offset-1 scale-105 shadow-md z-10 opacity-100'
                         : 'opacity-55 hover:opacity-80'
@@ -109,18 +202,18 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({ data }) => {
 
             {/* Band Range and Name Labels Below */}
             <div className="grid grid-cols-6 gap-1 text-center pt-2">
-              {CPCB_BANDS.map((band, idx) => {
+              {CPCB_BANDS.map((b, idx) => {
                 const isActive = idx === activeBandIdx;
                 return (
-                  <div key={band.name} className="flex flex-col items-center">
+                  <div key={b.name} className="flex flex-col items-center">
                     <span className={`text-[10px] ${isActive ? 'font-black text-slate-900' : 'text-slate-400 font-medium'}`}>
-                      {band.range}
+                      {b.range}
                     </span>
                     <span 
                       className={`text-[10px] leading-tight ${isActive ? 'font-bold' : 'text-slate-400 font-normal'}`} 
-                      style={{ color: isActive ? band.color : undefined }}
+                      style={{ color: isActive ? b.color : undefined }}
                     >
-                      {band.name}
+                      {b.name}
                     </span>
                   </div>
                 );
