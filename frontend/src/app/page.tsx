@@ -681,7 +681,7 @@ export default function HomePage() {
               cigarettesAvoidedDay={planData ? planData.impact_summary.cigarettes_avoided_day : 2.4}
               confidence={planData ? planData.impact_summary.confidence : "Modelled estimate"}
             />
-            <CommunityView />
+            <CommunityView city={city} />
           </div>
         )}
 
@@ -695,12 +695,12 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="mt-auto bg-white border-t border-slate-200 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-800">BreatheWise</span>
             <span>• Urban Air Quality Companion</span>
           </div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-slate-400 text-center sm:text-right max-w-full break-words">
             {t.common.disclaimer}
           </div>
         </div>

@@ -1,18 +1,31 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Trophy, Award, Leaf, ShieldAlert, Sparkles, CheckCircle } from 'lucide-react';
+import { Users, Trophy, Award, Leaf, ShieldAlert, Sparkles, CheckCircle, MapPin } from 'lucide-react';
 import { fetchCommunityChallenges, fetchCommunityLeaderboard, CommunityChallenge, CommunityLeaderboardEntry } from '@/lib/api';
+import { DEFAULT_COMMUNITY_CHALLENGES, DEFAULT_COMMUNITY_LEADERBOARD } from '@/lib/initialData';
 
-export const CommunityView: React.FC = () => {
-  const [challenges, setChallenges] = useState<CommunityChallenge[]>([]);
-  const [leaderboard, setLeaderboard] = useState<CommunityLeaderboardEntry[]>([]);
+interface CommunityViewProps {
+  city?: string;
+}
+
+export const CommunityView: React.FC<CommunityViewProps> = ({ city = 'Delhi' }) => {
+  const [challenges, setChallenges] = useState<CommunityChallenge[]>(DEFAULT_COMMUNITY_CHALLENGES);
+  const [leaderboard, setLeaderboard] = useState<CommunityLeaderboardEntry[]>(DEFAULT_COMMUNITY_LEADERBOARD);
   const [joined, setJoined] = useState<Record<string, boolean>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCommunityChallenges().then(setChallenges).catch(() => {});
-    fetchCommunityLeaderboard().then(setLeaderboard).catch(() => {});
+    fetchCommunityChallenges()
+      .then(res => {
+        if (Array.isArray(res) && res.length > 0) setChallenges(res);
+      })
+      .catch(() => {});
+    fetchCommunityLeaderboard()
+      .then(res => {
+        if (Array.isArray(res) && res.length > 0) setLeaderboard(res);
+      })
+      .catch(() => {});
   }, []);
 
   const handleJoin = (id: string, title: string) => {
@@ -20,7 +33,7 @@ export const CommunityView: React.FC = () => {
     setJoined(prev => ({ ...prev, [id]: isNowJoined }));
     setToastMessage(
       isNowJoined 
-        ? `Joined "${title}"! Your impact will contribute to cleaner neighborhood air.`
+        ? `Joined "${title}"! Your impact contributes to cleaner neighborhood air in ${city}.`
         : `Left "${title}" challenge.`
     );
     setTimeout(() => setToastMessage(null), 3200);
@@ -47,13 +60,13 @@ export const CommunityView: React.FC = () => {
           Community Air Challenges & RWA Leaderboard
         </h2>
         <p className="text-xs text-teal-100 mt-1">
-          Cleaner air requires collective neighborhood action. Join local challenges to multiply emissions impact.
+          Cleaner air requires collective neighborhood action. Join local challenges to multiply emissions impact across {city} and partner cities.
         </p>
       </div>
 
       {/* Challenges Grid */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
             <Award className="w-5 h-5 text-emerald-600" />
             Active Neighborhood Challenges
@@ -62,6 +75,9 @@ export const CommunityView: React.FC = () => {
             </span>
           </h3>
         </div>
+        <p className="text-xs text-slate-500 mb-4">
+          Community-led emission reduction campaigns across Indian urban centers. Pledging actions directly cut localized surface emissions.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {challenges.map((c) => (
             <div key={c.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
@@ -88,7 +104,7 @@ export const CommunityView: React.FC = () => {
                   className={`text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer transition-all ${
                     joined[c.id]
                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-xs'
                   }`}
                 >
                   {joined[c.id] ? 'Joined ✓' : 'Join Challenge'}
@@ -101,39 +117,63 @@ export const CommunityView: React.FC = () => {
 
       {/* Leaderboard */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-amber-500" />
-          Neighborhood Collective Impact Leaderboard
-          <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
-            Demo Data
-          </span>
-        </h3>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-500" />
+            Neighborhood Collective Impact Leaderboard
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
+              Demo Data
+            </span>
+          </h3>
+        </div>
+        <p className="text-xs text-slate-500 mb-4">
+          Verified resident car-free trips and localized emissions abatement across participating RWAs.
+        </p>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+        <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[500px] text-xs text-left">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase tracking-wider">
                 <th className="py-2.5 px-3">Rank</th>
                 <th className="py-2.5 px-3">Neighborhood / RWA</th>
                 <th className="py-2.5 px-3">City</th>
-                <th className="py-2.5 px-3">Active Residents</th>
-                <th className="py-2.5 px-3">Car-Free Trips</th>
-                <th className="py-2.5 px-3">CO₂ Avoided</th>
+                <th className="py-2.5 px-3 text-right">Active Residents</th>
+                <th className="hidden sm:table-cell py-2.5 px-3 text-right">Car-Free Trips</th>
+                <th className="py-2.5 px-3 text-right whitespace-nowrap">CO₂ Avoided</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {leaderboard.map((entry, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-3 font-bold text-slate-900">
-                    {idx === 0 ? '🥇 #1' : idx === 1 ? '🥈 #2' : idx === 2 ? '🥉 #3' : `#${idx + 1}`}
-                  </td>
-                  <td className="py-3 px-3 font-semibold text-slate-900">{entry.neighbourhood}</td>
-                  <td className="py-3 px-3 text-slate-500">{entry.city}</td>
-                  <td className="py-3 px-3">{entry.participants}</td>
-                  <td className="py-3 px-3">{entry.car_free_trips} trips</td>
-                  <td className="py-3 px-3 font-bold text-emerald-700">+{entry.co2_avoided_kg} kg</td>
-                </tr>
-              ))}
+              {leaderboard.map((entry, idx) => {
+                const isCurrentCity = city && entry.city.toLowerCase() === city.toLowerCase();
+                return (
+                  <tr 
+                    key={idx} 
+                    className={`transition-colors ${
+                      isCurrentCity 
+                        ? 'bg-emerald-50/80 font-semibold text-slate-900 border-l-2 border-emerald-600' 
+                        : 'hover:bg-slate-50/70'
+                    }`}
+                  >
+                    <td className="py-3 px-3 font-bold text-slate-900">
+                      {idx === 0 ? '🥇 #1' : idx === 1 ? '🥈 #2' : idx === 2 ? '🥉 #3' : `#${idx + 1}`}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span className="font-semibold text-slate-900">{entry.neighbourhood}</span>
+                      {isCurrentCity && (
+                        <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200 inline-block">
+                          Your City
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-slate-500">{entry.city}</td>
+                    <td className="py-3 px-3 text-right">{entry.participants}</td>
+                    <td className="hidden sm:table-cell py-3 px-3 text-right text-slate-600">{entry.car_free_trips} trips</td>
+                    <td className="py-3 px-3 text-right font-bold text-emerald-700 whitespace-nowrap">
+                      +{entry.co2_avoided_kg.toLocaleString()} kg
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

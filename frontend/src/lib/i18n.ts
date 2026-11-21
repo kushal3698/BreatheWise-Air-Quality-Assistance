@@ -82,7 +82,7 @@ export const I18N_DATA: Record<SupportedLanguage, Translations> = {
       refresh: "Refresh Live Data",
       generatePlan: "Generate Tailored Plan",
       loading: "Analyzing local air quality...",
-      disclaimer: "Estimates for awareness only. BreatheWise is a decision-support tool, not a medical device.",
+      disclaimer: "Estimates for awareness only. Not medical advice.",
       safeWindow: "Safe Window",
     },
   },
