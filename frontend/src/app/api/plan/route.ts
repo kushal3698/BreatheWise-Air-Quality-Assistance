@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { city = 'Delhi', household } = body;
+    let { city = 'Delhi', household } = body;
+    if (typeof city !== 'string') city = 'Delhi';
+    city = city.replace(/[^a-zA-Z0-9\s()\-]/g, '').trim().slice(0, 60) || 'Delhi';
     const plan = getCityPresetPlan(city, household);
     return NextResponse.json(plan);
   } catch (err) {

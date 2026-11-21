@@ -6,7 +6,17 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, city = 'Delhi', language = 'en', household } = body;
+    let { message = '', city = 'Delhi', language = 'en', household } = body;
+
+    // Security input sanitization
+    if (typeof message !== 'string') message = '';
+    message = message.trim().slice(0, 1000);
+
+    if (typeof city !== 'string') city = 'Delhi';
+    city = city.replace(/[^a-zA-Z0-9\s()\-]/g, '').trim().slice(0, 60) || 'Delhi';
+
+    const validLangs = ['en', 'hi', 'te', 'ta'];
+    if (!validLangs.includes(language)) language = 'en';
 
     // Optional: If GEMINI_API_KEY is configured in Vercel environment variables, we can call Gemini
     const apiKey = process.env.GEMINI_API_KEY;
