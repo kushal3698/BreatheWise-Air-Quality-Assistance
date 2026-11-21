@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Trophy, Award, Leaf, ShieldAlert, Sparkles, CheckCircle, MapPin } from 'lucide-react';
 import { fetchCommunityChallenges, fetchCommunityLeaderboard, CommunityChallenge, CommunityLeaderboardEntry } from '@/lib/api';
-import { DEFAULT_COMMUNITY_CHALLENGES, DEFAULT_COMMUNITY_LEADERBOARD } from '@/lib/initialData';
+import { DEFAULT_COMMUNITY_CHALLENGES, DEFAULT_COMMUNITY_LEADERBOARD, METRO_CITIES } from '@/lib/initialData';
 
 interface CommunityViewProps {
   city?: string;
@@ -14,6 +14,17 @@ export const CommunityView: React.FC<CommunityViewProps> = ({ city = 'Delhi' }) 
   const [leaderboard, setLeaderboard] = useState<CommunityLeaderboardEntry[]>(DEFAULT_COMMUNITY_LEADERBOARD);
   const [joined, setJoined] = useState<Record<string, boolean>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const isMetro = METRO_CITIES.has(city.toLowerCase().trim());
+
+  const getChallengeDescription = (challenge: CommunityChallenge) => {
+    if (challenge.id === 'c1' || challenge.title.includes('Car-Free')) {
+      return isMetro
+        ? "Pledge to replace private car trips with public transit (bus/metro), cycling, or shared electric shuttles this Friday."
+        : "Pledge to replace private car trips with public transit (bus / shared electric shuttle), cycling, or carpooling this Friday.";
+    }
+    return challenge.description;
+  };
 
   useEffect(() => {
     fetchCommunityChallenges()
@@ -91,7 +102,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({ city = 'Delhi' }) 
                   </span>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 mb-1">{c.title}</h4>
-                <p className="text-xs text-slate-600 leading-relaxed mb-4">{c.description}</p>
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">{getChallengeDescription(c)}</p>
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
