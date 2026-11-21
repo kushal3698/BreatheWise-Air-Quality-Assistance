@@ -8,7 +8,7 @@
 
 [![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Tests-39%20Passed%20(100%25)-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-39%20Passed-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 
@@ -50,7 +50,7 @@ Each clause of the official Challenge 6 brief is mapped to the code that impleme
 
 | Challenge 6 Requirement | Implementation Module | Source File(s) | Verification & Evidence |
 |:---|:---|:---|:---|
-| **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. |
+| **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. Live demo is rule-based; Gemini is used when a key is set. |
 | **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD, allergies). Automatically triggers high-priority caution banners when AQI is elevated. |
 | **Helps Communities Navigate Smog** | School Guidance Protocols & Neighborhood Community Challenges with real-time feedback | `frontend/src/components/SchoolView.tsx`<br>`frontend/src/components/CommunityView.tsx`<br>`backend/app/routers/school.py`<br>`backend/app/routers/community.py` | Operational protocols for morning assembly, sports PE, and recess ventilation. Neighborhood leaderboards with car-free challenges and cumulative community CO₂ counters. |
 | **Suggests Low-Emission Daily Routines** | Dynamic Daily Action Planner with diurnal curve synchronization | `frontend/src/components/PlanCard.tsx`<br>`backend/app/routers/plan.py`<br>`backend/app/services/air_quality.py` | Recommends optimal exercise windows (shifting from morning inversion to afternoon thermal mixing), work-from-home coordination, and trip consolidation. |
@@ -79,7 +79,7 @@ The brief asks for help during **severe winter smog**. BreatheWise treats winter
 - **Temperature inversion:** Cold ground-level air is trapped under a warmer layer, so pollutants stay near the surface, especially from night until late morning.
 - **Low wind and fog:** Calm, humid mornings keep particulates suspended.
 - **Extra sources in the cold season:** Open burning of leaves, waste and crop residue (mainly in north India), biomass heating and cooking, and festival emissions.
-- **Regional variation:** Inversion and burning episodes are most severe in the Indo-Gangetic Plain (e.g. Delhi, Lucknow, Patna). Southern cities such as Guntur and Vijayawada see milder winter peaks, and BreatheWise tailors advice to the actual forecast, not a fixed season.
+- **Regional variation:** Inversion and burning episodes are most severe in the Indo-Gangetic Plain (e.g. Delhi, Lucknow, Patna). BreatheWise tailors advice dynamically to local forecast telemetry across all Indian cities, rather than assuming a uniform seasonal baseline.
 
 ### How each cause maps to a feature
 | Winter problem | BreatheWise response | Where |
@@ -152,7 +152,7 @@ flowchart TD
         RAG_SVC["RAG Document Retriever (TF-IDF / Vector)"]
         IMPACT_SVC["Deterministic Impact Calculator"]
         SAFETY_SVC["Responsible AI & Medical Guardrails"]
-        LLM_SVC["Gemini 2.0 Flash / Demo Provider"]
+        LLM_SVC["Gemini (configurable via GEMINI_MODEL) / Demo Fallback"]
     end
 
     subgraph Data["📂 Data & Knowledge Bases"]
@@ -170,7 +170,7 @@ flowchart TD
     RAG_SVC --> KB
 ```
 
-> **Live Deployment Note:** On the live Vercel deployment, `/api/chat`, `/api/aqi`, and `/api/plan` run via lightweight Next.js serverless functions with complete offline pre-calibrated telemetry and grounded rule-based responses (proxying to Gemini 2.0 Flash when `GEMINI_API_KEY` is provided). The standalone FastAPI service powers local Python development and containerized Docker setups.
+> **Live Deployment Note:** On the live Vercel deployment, `/api/chat`, `/api/aqi`, and `/api/plan` run via lightweight Next.js serverless functions with complete offline pre-calibrated telemetry and grounded rule-based responses (proxying to Gemini when `GEMINI_API_KEY` is provided, configurable via `GEMINI_MODEL`). If the model call fails, the assistant falls back to the rule-based provider. The standalone FastAPI service powers local Python development and containerized Docker setups.
 
 ---
 
@@ -198,7 +198,7 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── impact.py            # Mathematical exposure, CO2, and INR calculator
 │   │   │   ├── rag.py               # Knowledge base retrieval & document indexing
 │   │   │   ├── safety.py            # Medical disclaimer & asthma safety rules
-│   │   │   └── llm/                 # Gemini 2.0 Flash & Demo providers
+│   │   │   └── llm/                 # Gemini (configurable via GEMINI_MODEL) & Demo providers
 │   │   ├── models/schemas.py        # Pydantic validation models with input limits
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
@@ -257,7 +257,7 @@ Starts both the FastAPI backend and Next.js frontend and opens `http://localhost
 ### 2. Manual Terminal Setup
 
 ```bash
-# 1. Initialize environment variables from template
+# 1. Initialize environment variables from template (once at repository root)
 cp .env.example .env
 ```
 
@@ -268,7 +268,6 @@ python -m venv .venv
 # Windows: .\.venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-cp ../.env.example .env
 python -m uvicorn app.main:app --reload --port 8000
 ```
 *Interactive Swagger documentation: [http://localhost:8000/docs](http://localhost:8000/docs)*
@@ -315,7 +314,7 @@ The frontend is optimized for zero-configuration deployment to **Vercel**:
     "low_emission_routines": [
       {
         "action": "Schedule outdoor exercise during the afternoon safe window (13:30 – 16:30)",
-        "why": "Between 06:00 and 09:30 AM, AQI peaks at ~500. Morning cardio increases fine particle alveolar intake.",
+        "why": "Between 06:00 and 09:30 AM, AQI peaks near ~390 during ground inversion. Morning cardio increases fine particle alveolar intake.",
         "effort": "low",
         "cost": "free",
         "impact": { "exposure_reduction_pct": 55.0, "confidence": "Modelled estimate" },
@@ -323,7 +322,7 @@ The frontend is optimized for zero-configuration deployment to **Vercel**:
       },
       {
         "action": "Shift peak commute (8–10 AM) to Metro or carpool",
-        "why": "Avoids concentrated tailpipe exhaust in traffic congestion and cuts personal transport emissions by ~70%.",
+        "why": "Avoids concentrated tailpipe exhaust in traffic congestion; switching from single-occupancy petrol car (170g CO2/km) to metro (14g CO2/km) cuts transit emissions by ~92% per commute kilometer.",
         "effort": "medium",
         "cost": "free",
         "impact": { "exposure_reduction_pct": 35.0, "co2_saved_kg": 2.3, "cost_saved_inr": 110.0, "confidence": "Modelled estimate" },
@@ -355,11 +354,12 @@ The frontend is optimized for zero-configuration deployment to **Vercel**:
     { "time": "06:00 - 09:30", "advice": "Severe morning peak. Ground inversion traps traffic exhaust; keep all exercise indoors." },
     { "time": "13:30 – 16:30", "advice": "Optimal safe window today. Afternoon solar convection disperses surface pollutants." }
   ],
+  // Units note: Action items show immediate single-event savings (₹110/commute, ₹50/errand), scaled to monthly totals in impact_summary
   "impact_summary": {
     "exposure_reduction_pct": 42.0,
     "co2_avoided_kg_week": 8.5,
     "cost_saved_inr_month": 1850.0,
-    "cigarettes_avoided_day": 2.4,
+    "cigarettes_avoided_day": 3.4,
     "confidence": "Modelled estimate"
   },
   "cautions": [
@@ -379,9 +379,9 @@ All environment variables have sensible defaults and fallback to complete offlin
 |:---|:---|:---|
 | `DEMO_MODE` | `true` | When true, serves pre-calibrated offline telemetry for 30+ Indian cities. |
 | `DEFAULT_CITY` | `Delhi` | Fallback city on initial launch. |
-| `LLM_PROVIDER` | `gemini` | `gemini` (Gemini 2.0 Flash) or `demo` (offline RAG generator). |
+| `LLM_PROVIDER` | `gemini` | `gemini` or `demo` (rule-based fallback). If the model call fails, the assistant falls back to the rule-based provider. |
 | `GEMINI_API_KEY` | `""` | Optional Google AI Studio API key for conversational chat. |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model identifier. |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Configurable via `GEMINI_MODEL` (e.g. `gemini-2.0-flash`, `gemini-1.5-flash`). |
 | `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Whitelisted cross-origin request sources. |
 | `RATE_LIMIT_RPM` | `120` | Maximum requests permitted per minute per client IP. |
 
@@ -403,14 +403,14 @@ $$I_p = I_{\text{lo}} + \frac{I_{\text{hi}} - I_{\text{lo}}}{B_{\text{hi}} - B_{
   - $61\text{–}90 \rightarrow 101\text{–}200$ (Moderate)
   - $91\text{–}120 \rightarrow 201\text{–}300$ (Poor)
   - $121\text{–}250 \rightarrow 301\text{–}400$ (Very Poor)
-  - $250.1\text{–}380 \rightarrow 401\text{–}500$ (Severe)
+  - $250.1\text{–}380 \rightarrow 401\text{–}500$ (Severe; 380 is an interpolation cap, CPCB defines Severe as 250+)
 - **$\text{PM}_{10}$**:
   - $0\text{–}50 \rightarrow 0\text{–}50$ (Good)
   - $51\text{–}100 \rightarrow 51\text{–}100$ (Satisfactory)
   - $101\text{–}250 \rightarrow 101\text{–}200$ (Moderate)
   - $251\text{–}350 \rightarrow 201\text{–}300$ (Poor)
   - $351\text{–}430 \rightarrow 301\text{–}400$ (Very Poor)
-  - $430.1\text{–}600 \rightarrow 401\text{–}500$ (Severe)
+  - $430.1\text{–}600 \rightarrow 401\text{–}500$ (Severe; 600 is an interpolation cap, CPCB defines Severe as 430+)
 
 #### Real-World Delhi Worked Example:
 - **$\text{PM}_{2.5} = 178.4\ \mu\text{g/m}^3$**: Bin $[121, 250] \rightarrow [301, 400] \implies 301 + \frac{99}{129} \times (178.4 - 121) = \mathbf{345}$
@@ -470,7 +470,7 @@ BreatheWise is designed for inclusive access:
 BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURITY.md)):
 - **HTTP Security Headers**: Enforces `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection: 1; mode=block`, and restrictive `Permissions-Policy`.
 - **In-Memory Rate Limiting**: Enforces a 120 requests/minute ceiling per client IP with `429 Too Many Requests` responses.
-- **Multi-Lingual Input Sanitization**: City parameters scrubbed with Unicode regex supporting Latin, Devanagari, Telugu, and Tamil scripts (`[\p{L}\p{M}\p{N}\s()\-.]`) while neutralizing SQL/script injection; chat queries capped at 1,000 characters.
+- **Multi-Lingual Input Sanitization**: City parameters are sanitized using a Unicode-aware regular expression with the `u` flag (`/[^\p{L}\p{M}\p{N}\s()\-.]/gu`), preserving Latin, Devanagari, Telugu, and Tamil characters while neutralizing cross-site scripting (XSS) and injection attempts. Chat queries are length-capped at 1,000 characters.
 - **Stack Trace Suppression**: Generic 500 error handler prevents exposure of internal exception traces.
 - **Zero Committed Secrets**: `.env.example` template provided; offline simulation operates seamlessly without requiring external credentials.
 

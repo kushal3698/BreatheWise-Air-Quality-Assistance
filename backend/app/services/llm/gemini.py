@@ -7,6 +7,10 @@ from app.services.llm.base import BaseLLMProvider
 from app.services.llm.demo_llm import DemoLLMProvider
 
 class GeminiLLMProvider(BaseLLMProvider):
+    """
+    Gemini API integration (configurable via GEMINI_MODEL).
+    If the model call fails, times out, or no API key is provided, the assistant falls back to the rule-based provider.
+    """
     def __init__(self):
         self.demo = DemoLLMProvider()
 
