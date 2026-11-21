@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     message = message.trim().slice(0, 1000);
 
     if (typeof city !== 'string') city = 'Delhi';
-    city = city.replace(/[^a-zA-Z0-9\s()\-]/g, '').trim().slice(0, 60) || 'Delhi';
+    city = city.replace(/[^\p{L}\p{M}\p{N}\s()\-.]/gu, '').trim().slice(0, 60) || 'Delhi';
 
     const validLangs = ['en', 'hi', 'te', 'ta'];
     if (!validLangs.includes(language)) language = 'en';

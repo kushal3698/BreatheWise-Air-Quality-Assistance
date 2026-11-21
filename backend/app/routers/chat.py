@@ -7,7 +7,13 @@ from app.services.llm.factory import get_llm_provider
 router = APIRouter(prefix="/api", tags=["Chat"])
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_breathewise(request: ChatRequest):
+async def chat_with_breathewise(request: ChatRequest) -> ChatResponse:
+    """
+    Multilingual RAG-grounded conversational assistant endpoint.
+    
+    Supports English, Hindi, Telugu, and Tamil. Integrates clinical environmental health
+    knowledge with real-time local CPCB AQI readings and household vulnerability profiles.
+    """
     city = request.city or "Delhi"
     aqi_data = await fetch_air_quality(city)
     

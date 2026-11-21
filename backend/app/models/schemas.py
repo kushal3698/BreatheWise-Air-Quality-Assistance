@@ -114,7 +114,7 @@ class ImpactSummary(BaseModel):
     confidence: str = "Modelled estimate"
 
 class DailyPlanRequest(BaseModel):
-    city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[a-zA-Z0-9\s()\-]+$")
+    city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[\w\s()\-.]+$")
     language: str = Field(default="en", pattern=r"^(en|hi|te|ta)$")
     household: Optional[HouseholdProfile] = None
 
@@ -135,7 +135,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000, description="User conversational query capped at 1000 characters")
-    city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[a-zA-Z0-9\s()\-]+$")
+    city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[\w\s()\-.]+$")
     language: str = Field(default="en", pattern=r"^(en|hi|te|ta)$")
     household: Optional[HouseholdProfile] = None
     history: List[ChatMessage] = Field(default_factory=list)

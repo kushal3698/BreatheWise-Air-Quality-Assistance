@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     let { city = 'Delhi', household } = body;
     if (typeof city !== 'string') city = 'Delhi';
-    city = city.replace(/[^a-zA-Z0-9\s()\-]/g, '').trim().slice(0, 60) || 'Delhi';
+    city = city.replace(/[^\p{L}\p{M}\p{N}\s()\-.]/gu, '').trim().slice(0, 60) || 'Delhi';
     const plan = getCityPresetPlan(city, household);
     return NextResponse.json(plan);
   } catch (err) {

@@ -6,12 +6,11 @@
 
 ![BreatheWise Dashboard Presentation](docs/assets/thumbnail.jpg)
 
-[![CI / CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20Passing-2ea44f?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
+[![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-A%2B%20(100%2F100)-blue?style=for-the-badge)](frontend/src)
-[![Tests Passing](https://img.shields.io/badge/Tests-38%20Passed%20(100%25)-success?style=for-the-badge)](backend/tests)
-[![Accessibility](https://img.shields.io/badge/WCAG%202.1-AA%20Compliant-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
-[![Security Policy](https://img.shields.io/badge/Security-Enforced%20(A%2B)-red?style=for-the-badge)](SECURITY.md)
+[![Tests Passing](https://img.shields.io/badge/Tests-39%20Passed%20(100%25)-success?style=for-the-badge)](backend/tests)
+[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
+[![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 
 ---
 
@@ -27,11 +26,14 @@
 
 - [🎯 Challenge 6 Requirement Traceability Matrix](#-challenge-6-requirement-traceability-matrix)
 - [🌍 Overview & Problem Statement](#-overview--problem-statement)
+- [❄️ Winter Smog Playbook](#️-winter-smog-playbook)
 - [✨ Key Features](#-key-features)
 - [🏗️ System Architecture](#️-system-architecture)
 - [📁 Repository Structure](#-repository-structure)
 - [⚡ Quick Start & Deployment](#-quick-start--deployment)
 - [📡 API Reference](#-api-reference)
+- [📄 Sample API Plan Response](#-sample-api-plan-response)
+- [⚙️ Environment Variables & Config](#️-environment-variables--config)
 - [🧮 Mathematical Engine & CPCB Breakpoints](#-mathematical-engine--cpcb-breakpoints)
 - [📡 Data Sources & Limitations](#-data-sources--limitations)
 - [🧪 Automated Testing & CI/CD](#-automated-testing--cicd)
@@ -44,12 +46,12 @@
 
 ## 🎯 Challenge 6 Requirement Traceability Matrix
 
-Every single clause from the official **[Challenge 6] Urban Air Quality Assistant** brief is completely implemented, verified, and traceably mapped to code:
+Each clause of the official Challenge 6 brief is mapped to the code that implements it:
 
 | Challenge 6 Requirement | Implementation Module | Source File(s) | Verification & Evidence |
 |:---|:---|:---|:---|
 | **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. |
-| **Helps Families Navigate Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD, allergies). Automatically triggers high-priority caution banners when AQI is elevated. |
+| **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD, allergies). Automatically triggers high-priority caution banners when AQI is elevated. |
 | **Helps Communities Navigate Smog** | School Guidance Protocols & Neighborhood Community Challenges with real-time feedback | `frontend/src/components/SchoolView.tsx`<br>`frontend/src/components/CommunityView.tsx`<br>`backend/app/routers/school.py`<br>`backend/app/routers/community.py` | Operational protocols for morning assembly, sports PE, and recess ventilation. Neighborhood leaderboards with car-free challenges and cumulative community CO₂ counters. |
 | **Suggests Low-Emission Daily Routines** | Dynamic Daily Action Planner with diurnal curve synchronization | `frontend/src/components/PlanCard.tsx`<br>`backend/app/routers/plan.py`<br>`backend/app/services/air_quality.py` | Recommends optimal exercise windows (shifting from morning inversion to afternoon thermal mixing), work-from-home coordination, and trip consolidation. |
 | **Indoor Air Quality Hacks** | Actionable, zero-cost and low-cost indoor mitigation techniques | `frontend/src/components/PlanCard.tsx`<br>`backend/app/knowledge_base/indoor_air_quality.md` | Wet mopping over sweeping, DIY Corsi-Rosenthal filtration boxes, window sealing during smog peaks, timed ventilation during afternoon dips, and kitchen exhaust protocols. |
@@ -69,12 +71,36 @@ Urban air pollution across Indian cities—especially during severe winter tempe
 
 ---
 
+## ❄️ Winter Smog Playbook
+
+The brief asks for help during **severe winter smog**. BreatheWise treats winter as a specific, time-of-day problem and maps each cause to a feature.
+
+### Why winter air is worse
+- **Temperature inversion:** Cold ground-level air is trapped under a warmer layer, so pollutants stay near the surface, especially from night until late morning.
+- **Low wind and fog:** Calm, humid mornings keep particulates suspended.
+- **Extra sources in the cold season:** Open burning of leaves, waste and crop residue (mainly in north India), biomass heating and cooking, and festival emissions.
+- **Regional variation:** Inversion and burning episodes are most severe in the Indo-Gangetic Plain (e.g. Delhi, Lucknow, Patna). Southern cities such as Guntur and Vijayawada see milder winter peaks, and BreatheWise tailors advice to the actual forecast, not a fixed season.
+
+### How each cause maps to a feature
+| Winter problem | BreatheWise response | Where |
+|:---|:---|:---|
+| Morning inversion peak | Diurnal curve shows the morning peak; plan advises keeping intense cardio indoors until air improves | `ForecastChart.tsx`, `PlanCard.tsx` |
+| Cleaner afternoon window | Safe Windows derived from the afternoon thermal-mixing dip | `SafeWindows.tsx` |
+| Polluted air getting indoors | Seal windows at the morning peak, ventilate in the safe window, run a HEPA purifier or DIY Corsi-Rosenthal box | `PlanCard.tsx`, `indoor_air_quality.md` |
+| Open burning | Zero Open-Burning Vigilance community challenge | `CommunityView.tsx` |
+| Vulnerable people | Asthma caution banner for sensitive members; school protocols for assembly, PE and recess | `safety.py`, `SchoolView.tsx` |
+
+### Honest note on the forecast
+The 24-hour curve is a **modelled diurnal shape** anchored to the current estimate, not a measured hourly station feed. See [Data Sources & Limitations](#-data-sources--limitations).
+
+---
+
 ## ✨ Key Features
 
 ### 1. 📊 Official CPCB NAQI Dial & Diurnal Forecast
 - **CPCB-Standard Formula**: Headline AQI computed as the strict maximum across pollutant sub-indices ($\max(I_{\text{PM2.5}}, I_{\text{PM10}}, I_{\text{NO2}}, \dots)$).
 - **Synchronized Visual Feedback**: A single source of truth (`getAQIBand`) simultaneously controls the category badge, color accent, and active segment highlight on the 6-band CPCB gauge (**Good**, **Satisfactory**, **Moderate**, **Poor**, **Very Poor**, **Severe**).
-- **Dominant Pollutant Callout**: Instantly surfaces the primary health driver (e.g. `Dominant pollutant: PM2.5 • Sub-index: ~428`).
+- **Dominant Pollutant Callout**: Instantly surfaces the primary health driver (e.g. `Dominant pollutant: PM2.5 • Sub-index: ~345`).
 - **Benchmark Indicators**: Displays both **India NAAQS** and **WHO 2021** reference thresholds with real-time exceedance multipliers.
 - **Realistic Diurnal Inversion Curve**: 24-hour forecast sampled at strictly even 2-hour increments (`00:00, 02:00, ..., 22:00`) illustrating natural atmospheric physics: morning inversion peak (08:00), afternoon thermal dispersion dip (14:00), and evening traffic peak (20:00).
 - **Mathematically Derived Safe Windows**: Highlights optimal outdoor exposure windows matching the afternoon thermal mixing dip.
@@ -113,7 +139,7 @@ flowchart TD
         I18N["Multi-Language Engine (EN, HI, TE, TA)"]
     end
 
-    subgraph Serverless["⚡ Next.js API Routes (Vercel Serverless)"]
+    subgraph Serverless["⚡ Next.js API Routes (Vercel Production)"]
         ROUTE_AQI["/api/aqi (City Telemetry & CPCB Math)"]
         ROUTE_PLAN["/api/plan (Personalized Daily Plan)"]
         ROUTE_CHAT["/api/chat (Sanitized AI Proxy)"]
@@ -126,7 +152,7 @@ flowchart TD
         RAG_SVC["RAG Document Retriever (TF-IDF / Vector)"]
         IMPACT_SVC["Deterministic Impact Calculator"]
         SAFETY_SVC["Responsible AI & Medical Guardrails"]
-        LLM_SVC["Gemini 1.5 Flash / Demo Provider"]
+        LLM_SVC["Gemini 2.5 Flash / Demo Provider"]
     end
 
     subgraph Data["📂 Data & Knowledge Bases"]
@@ -143,6 +169,8 @@ flowchart TD
     IMPACT_SVC --> EMISSIONS
     RAG_SVC --> KB
 ```
+
+> **Live Deployment Note:** On the live Vercel deployment, `/api/chat`, `/api/aqi`, and `/api/plan` run via lightweight Next.js serverless functions with complete offline pre-calibrated telemetry and grounded rule-based responses (proxying to Gemini 2.5 Flash when `GEMINI_API_KEY` is provided). The standalone FastAPI service powers local Python development and containerized Docker setups.
 
 ---
 
@@ -170,7 +198,7 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── impact.py            # Mathematical exposure, CO2, and INR calculator
 │   │   │   ├── rag.py               # Knowledge base retrieval & document indexing
 │   │   │   ├── safety.py            # Medical disclaimer & asthma safety rules
-│   │   │   └── llm/                 # Gemini 1.5 Flash & Demo providers
+│   │   │   └── llm/                 # Gemini 2.5 Flash & Demo providers
 │   │   ├── models/schemas.py        # Pydantic validation models with input limits
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
@@ -199,12 +227,15 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── api.ts               # Resilient client API functions
 │   │   │   ├── initialData.ts       # 30+ city presets & CPCB NAQI calculations
 │   │   │   └── i18n.ts              # English, Hindi, Telugu, Tamil translations
-│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n (23 tests)
+│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n (24 tests)
 │   ├── next.config.js               # Strict HTTP security headers (HSTS, CSP, X-Frame)
 │   ├── package.json                 # Next.js 14 & dependencies
 │   └── tailwind.config.js           # Tailwind CSS configuration
 ├── docs/assets/
 │   └── thumbnail.jpg                # 16:9 Presentation thumbnail
+├── run_all.bat                      # Unified Windows launcher
+├── run_backend.bat                  # Dedicated FastAPI backend launcher
+├── run_frontend.bat                 # Dedicated Next.js frontend launcher
 ├── .env.example                     # Environment template (zero committed secrets)
 ├── CONTRIBUTING.md                  # Code style, testing, and contribution guide
 ├── SECURITY.md                      # Formal security policy & threat model
@@ -218,7 +249,7 @@ BreatheWise-Air-Quality-Assistance/
 
 ### 1. Unified Launch (Windows)
 ```powershell
-# Double-click or run:
+# Double-click or run from terminal:
 .\run_all.bat
 ```
 Starts both the FastAPI backend and Next.js frontend and opens `http://localhost:3000` in your browser.
@@ -232,6 +263,7 @@ python -m venv .venv
 # Windows: .\.venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
+cp ../.env.example .env
 python -m uvicorn app.main:app --reload --port 8000
 ```
 *Interactive Swagger documentation: [http://localhost:8000/docs](http://localhost:8000/docs)*
@@ -266,6 +298,90 @@ The frontend is optimized for zero-configuration deployment to **Vercel**:
 
 ---
 
+## 📄 Sample API Plan Response
+
+`POST /api/plan` returns a structured schema combining actionable routines with deterministic impact:
+
+```json
+{
+  "summary": "Elevated Very Poor smog today in Delhi (NCR) (AQI 345). Ground inversion traps morning emissions; shift cardio indoors and use the afternoon safe window (13:30 – 16:30).",
+  "risk_level": "high",
+  "sections": {
+    "low_emission_routines": [
+      {
+        "action": "Schedule outdoor exercise during the afternoon safe window (13:30 – 16:30)",
+        "why": "Between 06:00 and 09:30 AM, AQI peaks at ~500. Morning cardio increases fine particle alveolar intake.",
+        "effort": "low",
+        "cost": "free",
+        "impact": { "exposure_reduction_pct": 55.0, "confidence": "Modelled estimate" },
+        "sources": ["kb/exercise_and_aqi.md"]
+      },
+      {
+        "action": "Shift peak commute (8–10 AM) to Metro or carpool",
+        "why": "Avoids concentrated tailpipe exhaust in traffic congestion and cuts personal transport emissions by ~70%.",
+        "effort": "medium",
+        "cost": "free",
+        "impact": { "exposure_reduction_pct": 35.0, "co2_saved_kg": 2.3, "cost_saved_inr": 110.0, "confidence": "Modelled estimate" },
+        "sources": ["kb/sustainable_transport.md"]
+      }
+    ],
+    "indoor_air_hacks": [
+      {
+        "action": "Keep windows shut during morning peak; cross-ventilate during 13:30 – 16:30",
+        "why": "Afternoon solar convection breaks the inversion layer, dropping PM2.5 to the daily low.",
+        "effort": "low",
+        "cost": "free",
+        "impact": { "exposure_reduction_pct": 35.0, "confidence": "Modelled estimate" },
+        "sources": ["kb/indoor_air_quality.md"]
+      }
+    ],
+    "sustainable_alternatives": [
+      {
+        "action": "Batch grocery and errand trips across Delhi (NCR) during the safe window",
+        "why": "Reduces cold-start engine emissions and lowers weekly fuel burn.",
+        "effort": "low",
+        "cost": "free",
+        "impact": { "exposure_reduction_pct": 15.0, "co2_saved_kg": 1.2, "cost_saved_inr": 50.0, "confidence": "Modelled estimate" },
+        "sources": ["kb/sustainable_transport.md"]
+      }
+    ]
+  },
+  "today_timeline": [
+    { "time": "06:00 - 09:30", "advice": "Severe morning peak. Ground inversion traps traffic exhaust; keep all exercise indoors." },
+    { "time": "13:30 – 16:30", "advice": "Optimal safe window today. Afternoon solar convection disperses surface pollutants." }
+  ],
+  "impact_summary": {
+    "exposure_reduction_pct": 42.0,
+    "co2_avoided_kg_week": 8.5,
+    "cost_saved_inr_month": 1850.0,
+    "cigarettes_avoided_day": 2.4,
+    "confidence": "Modelled estimate"
+  },
+  "cautions": [
+    "One or more household members have respiratory sensitivities (asthma/COPD): Keep prescribed fast-acting reliever inhalers within immediate reach."
+  ],
+  "disclaimer": "Estimates for awareness only. BreatheWise is a decision-support tool, not a medical device."
+}
+```
+
+---
+
+## ⚙️ Environment Variables & Config
+
+All environment variables have sensible defaults and fallback to complete offline operation:
+
+| Variable | Default | Purpose |
+|:---|:---|:---|
+| `DEMO_MODE` | `true` | When true, serves pre-calibrated offline telemetry for 30+ Indian cities. |
+| `DEFAULT_CITY` | `Delhi` | Fallback city on initial launch. |
+| `LLM_PROVIDER` | `gemini` | `gemini` (Gemini 2.5 Flash) or `demo` (offline RAG generator). |
+| `GEMINI_API_KEY` | `""` | Optional Google AI Studio API key for conversational chat. |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model identifier. |
+| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Whitelisted cross-origin request sources. |
+| `RATE_LIMIT_RPM` | `120` | Maximum requests permitted per minute per client IP. |
+
+---
+
 ## 🧮 Mathematical Engine & CPCB Breakpoints
 
 ### Official CPCB NAQI Formulation
@@ -282,28 +398,27 @@ $$I_p = I_{\text{lo}} + \frac{I_{\text{hi}} - I_{\text{lo}}}{B_{\text{hi}} - B_{
   - $61\text{–}90 \rightarrow 101\text{–}200$ (Moderate)
   - $91\text{–}120 \rightarrow 201\text{–}300$ (Poor)
   - $121\text{–}250 \rightarrow 301\text{–}400$ (Very Poor)
-  - $250+ \rightarrow 401\text{–}500$ (Severe)
+  - $250.1\text{–}380 \rightarrow 401\text{–}500$ (Severe)
 - **$\text{PM}_{10}$**:
   - $0\text{–}50 \rightarrow 0\text{–}50$ (Good)
   - $51\text{–}100 \rightarrow 51\text{–}100$ (Satisfactory)
   - $101\text{–}250 \rightarrow 101\text{–}200$ (Moderate)
   - $251\text{–}350 \rightarrow 201\text{–}300$ (Poor)
   - $351\text{–}430 \rightarrow 301\text{–}400$ (Very Poor)
-  - $430+ \rightarrow 401\text{–}500$ (Severe)
+  - $430.1\text{–}600 \rightarrow 401\text{–}500$ (Severe)
 
 #### Real-World Delhi Worked Example:
-- **$\text{PM}_{2.5} = 178.4\ \mu\text{g/m}^3$**: Bin $[151, 250] \rightarrow [401, 500] \implies 401 + \frac{99}{99} \times (178.4 - 151) = \mathbf{428}$
-- **$\text{PM}_{10} = 288.0\ \mu\text{g/m}^3$**: Bin $[251, 350] \rightarrow [301, 400] \implies 301 + \frac{99}{99} \times (288.0 - 251) = \mathbf{338}$
+- **$\text{PM}_{2.5} = 178.4\ \mu\text{g/m}^3$**: Bin $[121, 250] \rightarrow [301, 400] \implies 301 + \frac{99}{129} \times (178.4 - 121) = \mathbf{345}$
+- **$\text{PM}_{10} = 288.0\ \mu\text{g/m}^3$**: Bin $[251, 350] \rightarrow [201, 300] \implies 201 + \frac{99}{99} \times (288.0 - 251) = \mathbf{238}$
 - **$\text{NO}_2 = 45.2\ \mu\text{g/m}^3$**: Bin $[41, 80] \rightarrow [51, 100] \implies 51 + \frac{49}{39} \times (45.2 - 41) = \mathbf{56}$
-- **Final CPCB AQI**: $\max(428, 338, 56) = \mathbf{428\ (\text{Severe})}$ with **Dominant Pollutant: $\text{PM}_{2.5}$**.
+- **Final CPCB AQI**: $\max(345, 238, 56) = \mathbf{345\ (\text{Very Poor})}$ with **Dominant Pollutant: $\text{PM}_{2.5}$**.
 
 ---
 
 ## 📡 Data Sources & Limitations
 
 ### 1. Telemetry Transparency
-- **Live CPCB Telemetry**: For stations where direct telemetry is available, the UI prominently marks metrics with `● Live Station`.
-- **Modelled Estimates**: When physical CAAQMS stations are beyond direct proximity, metrics are sourced from European Centre for Medium-Range Weather Forecasts (ECMWF) via Open-Meteo, satellite aerosol optical depth (AOD), and procedural diurnal boundary layer modeling. The application prominently displays:
+- **Modelled Atmospheric Estimates**: Unless connected to an active CAAQMS physical station feed, telemetry is derived from atmospheric reanalysis models via Open-Meteo and procedural diurnal boundary layer modeling. The application prominently displays:
   > `● Modelled estimate • Regional estimate for {City} • Street level exposures vary with local traffic.`
 
 ### 2. CPCB Integer Rounding Protocol
@@ -316,10 +431,10 @@ Under official Indian Central Pollution Control Board reporting conventions, amb
 
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **38 automated tests** across frontend and backend suites, integrated into GitHub Actions with code coverage tracking:
+BreatheWise maintains **39 automated tests** across frontend and backend suites, integrated into GitHub Actions with code coverage tracking:
 
 ```bash
-# Frontend Tests (Vitest — 23 passed)
+# Frontend Tests (Vitest — 24 passed)
 cd frontend
 npm test -- --run
 
@@ -339,7 +454,7 @@ python -m pytest backend/tests -v
 BreatheWise is designed for inclusive access:
 - **Skip to Main Content**: Keyboard-accessible anchor (`#main-content`) allows screen reader and keyboard users to bypass navigation.
 - **ARIA Semantics**: Proper `role="tablist"`, `role="tab"`, `aria-selected`, `role="status"`, `aria-live="polite"`, and `role="search"` attributes throughout.
-- **Contrast Ratios**: Color palettes for all 6 CPCB bands exceed the WCAG 4.5:1 minimum contrast ratio.
+- **Contrast Ratios**: Color palettes for all 6 CPCB bands are designed for WCAG 2.1 AA contrast standards with high-contrast text pairings.
 - **Screen Reader Support**: Decorative icons feature `aria-hidden="true"`, while interactive inputs provide explicit `aria-label` tags.
 - **Multi-Language Tagging**: Main content containers carry explicit `lang` attributes (`en`, `hi`, `te`, `ta`) so screen readers select correct voice engines.
 
@@ -350,7 +465,7 @@ BreatheWise is designed for inclusive access:
 BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURITY.md)):
 - **HTTP Security Headers**: Enforces `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection: 1; mode=block`, and restrictive `Permissions-Policy`.
 - **In-Memory Rate Limiting**: Enforces a 120 requests/minute ceiling per client IP with `429 Too Many Requests` responses.
-- **Input Sanitization**: City parameters scrubbed with regex `/[^a-zA-Z0-9\s()\-]/g` and chat queries capped at 1,000 characters.
+- **Multi-Lingual Input Sanitization**: City parameters scrubbed with Unicode regex supporting Latin, Devanagari, Telugu, and Tamil scripts (`[\p{L}\p{M}\p{N}\s()\-.]`) while neutralizing SQL/script injection; chat queries capped at 1,000 characters.
 - **Stack Trace Suppression**: Generic 500 error handler prevents exposure of internal exception traces.
 - **Zero Committed Secrets**: `.env.example` template provided; offline simulation operates seamlessly without requiring external credentials.
 

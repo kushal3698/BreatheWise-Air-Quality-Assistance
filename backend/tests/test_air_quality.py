@@ -26,9 +26,9 @@ def test_cpcb_aqi_calculation():
     aqi_official = calculate_cpcb_aqi(pm2_5=60.1, pm10=118.3)
     assert aqi_official == 113
 
-    # Delhi benchmark: PM2.5=178.4 (sub-index 428), PM10=288.0 (sub-index 338), NO2=45.2 (sub-index 56)
+    # Delhi benchmark: PM2.5=178.4 (sub-index 345), PM10=288.0 (sub-index 238), NO2=45.2 (sub-index 56)
     aqi_delhi = calculate_cpcb_aqi(pm2_5=178.4, pm10=288.0, no2=45.2)
-    assert aqi_delhi == 428
+    assert aqi_delhi == 345
 
 def test_aqi_categories_and_colors():
     cat, col = get_aqi_category_and_color(45)

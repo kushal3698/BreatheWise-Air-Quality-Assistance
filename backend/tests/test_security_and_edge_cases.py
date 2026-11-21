@@ -20,9 +20,9 @@ def test_extreme_cpcb_boundary_values():
 
 def test_multi_pollutant_dominance():
     """Verify CPCB NAQI correctly isolates the dominant pollutant sub-index."""
-    # PM2.5 = 178.4 -> 428, PM10 = 288.0 -> 338, NO2 = 45.2 -> 56 => Max = 428
+    # PM2.5 = 178.4 -> 345, PM10 = 288.0 -> 238, NO2 = 45.2 -> 56 => Max = 345
     aqi = calculate_cpcb_aqi(pm2_5=178.4, pm10=288.0, no2=45.2)
-    assert aqi == 428
+    assert aqi == 345
 
 def test_security_middleware_registered():
     """Verify security middleware and CORS policies are properly configured on FastAPI app."""

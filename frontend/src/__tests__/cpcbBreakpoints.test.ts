@@ -40,16 +40,23 @@ describe('CPCB National Air Quality Index (NAQI) Breakpoint Engine', () => {
     expect(res.category).toBe('Very Poor');
   });
 
-  it('correctly maps Severe band (401-500) and Delhi real-world coordinates', () => {
-    // Delhi real telemetry: PM2.5 = 178.4 -> 428, PM10 = 288 -> 338, NO2 = 45.2 -> 56
+  it('correctly maps Very Poor band (301-400) and Delhi real-world coordinates', () => {
+    // Delhi real telemetry: PM2.5 = 178.4 -> 345, PM10 = 288 -> 238, NO2 = 45.2 -> 56
     const res = calculateCPCB_AQI(178.4, 288.0, 45.2);
-    expect(res.subIndices.pm2_5).toBe(428);
-    expect(res.subIndices.pm10).toBe(338);
+    expect(res.subIndices.pm2_5).toBe(345);
+    expect(res.subIndices.pm10).toBe(238);
     expect(res.subIndices.no2).toBe(56);
-    expect(res.aqi).toBe(428);
-    expect(res.category).toBe('Severe');
+    expect(res.aqi).toBe(345);
+    expect(res.category).toBe('Very Poor');
     expect(res.dominantPollutant.name).toBe('PM2.5');
-    expect(res.dominantPollutant.subIndex).toBe(428);
+    expect(res.dominantPollutant.subIndex).toBe(345);
+  });
+
+  it('correctly maps Severe band (401-500) for extreme winter smog episodes', () => {
+    // PM2.5 = 280.0 in [250.1, 380] -> 401 + (99/129.9)*(280-250.1) ≈ 424
+    const res = calculateCPCB_AQI(280.0, 450.0);
+    expect(res.aqi).toBeGreaterThanOrEqual(401);
+    expect(res.category).toBe('Severe');
   });
 
   it('handles upper concentration bounds gracefully with 500 ceiling', () => {
@@ -59,10 +66,10 @@ describe('CPCB National Air Quality Index (NAQI) Breakpoint Engine', () => {
   });
 
   it('synchronizes getAQIBand outputs for badge, color, and bar highlighting', () => {
-    const band428 = getAQIBand(428);
-    expect(band428.name).toBe('Severe');
-    expect(band428.color).toBe('#8e44ad');
-    expect(band428.badgeClass).toContain('bg-purple-50');
+    const band345 = getAQIBand(345);
+    expect(band345.name).toBe('Very Poor');
+    expect(band345.color).toBe('#e74c3c');
+    expect(band345.badgeClass).toContain('bg-red-50');
 
     const band285 = getAQIBand(285);
     expect(band285.name).toBe('Poor');

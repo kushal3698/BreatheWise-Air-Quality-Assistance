@@ -21,15 +21,16 @@ export const CPCB_BREAKPOINTS: Record<string, Array<{ c_low: number; c_high: num
     { c_low: 31, c_high: 60, i_low: 51, i_high: 100 },
     { c_low: 61, c_high: 90, i_low: 101, i_high: 200 },
     { c_low: 91, c_high: 120, i_low: 201, i_high: 300 },
-    { c_low: 121, c_high: 150, i_low: 301, i_high: 400 },
-    { c_low: 151, c_high: 250, i_low: 401, i_high: 500 },
+    { c_low: 121, c_high: 250, i_low: 301, i_high: 400 },
+    { c_low: 250.1, c_high: 380, i_low: 401, i_high: 500 },
   ],
   pm10: [
     { c_low: 0, c_high: 50, i_low: 0, i_high: 50 },
     { c_low: 51, c_high: 100, i_low: 51, i_high: 100 },
     { c_low: 100.1, c_high: 250, i_low: 101, i_high: 200 },
-    { c_low: 251, c_high: 350, i_low: 301, i_high: 400 },
-    { c_low: 351, c_high: 430, i_low: 401, i_high: 500 },
+    { c_low: 251, c_high: 350, i_low: 201, i_high: 300 },
+    { c_low: 351, c_high: 430, i_low: 301, i_high: 400 },
+    { c_low: 430.1, c_high: 600, i_low: 401, i_high: 500 },
   ],
   no2: [
     { c_low: 0, c_high: 40, i_low: 0, i_high: 50 },
@@ -166,9 +167,9 @@ export const CITY_PRESETS: Record<string, AirQualityData> = {
     location: { name: "Delhi (NCR)", state: "Delhi", country: "India", lat: 28.6139, lon: 77.2090 },
     station: { name: "Lodhi Road CAAQMS Station", distance_km: 2.1 },
     current: {
-      aqi: 428, category: "Severe", cpcb_color: "#8e44ad",
+      aqi: 345, category: "Very Poor", cpcb_color: "#e74c3c",
       pm2_5: 178.4, pm10: 288.0, no2: 45.2, so2: 14.8, co: 1.9, o3: 28.5,
-      dominant_pollutant: { name: "PM2.5", sub_index: 428 }
+      dominant_pollutant: { name: "PM2.5", sub_index: 345 }
     },
     weather: { temp_c: 11.2, humidity: 74, wind_kmh: 4.5, wind_direction: "NW", conditions: "Winter Inversion Smog" },
     forecast: [
