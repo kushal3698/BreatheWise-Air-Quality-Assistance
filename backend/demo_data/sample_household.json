@@ -1,0 +1,26 @@
+{
+  "city": "Delhi",
+  "language": "en",
+  "household": {
+    "members": [
+      { "id": "m1", "role": "child", "age": 8, "sensitivities": [] },
+      { "id": "m2", "role": "child", "age": 11, "sensitivities": [] },
+      { "id": "m3", "role": "adult", "age": 38, "sensitivities": ["asthma"] },
+      { "id": "m4", "role": "adult", "age": 40, "sensitivities": [] },
+      { "id": "m5", "role": "elderly", "age": 68, "sensitivities": ["hypertension"] }
+    ],
+    "transport": {
+      "mode": "petrol_car",
+      "vehicles": 2,
+      "school_run_km": 6,
+      "commute_km": 18
+    },
+    "home": {
+      "type": "apartment",
+      "floor": 6,
+      "has_purifier": false,
+      "cooking_fuel": "LPG"
+    },
+    "work_from_home_days": 2
+  }
+}

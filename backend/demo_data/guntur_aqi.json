@@ -1,0 +1,61 @@
+{
+  "location": {
+    "name": "Guntur",
+    "state": "Andhra Pradesh",
+    "country": "India",
+    "lat": 16.3067,
+    "lon": 80.4365
+  },
+  "station": {
+    "name": "Anandpet Ambient Air Quality Station",
+    "distance_km": 3.4
+  },
+  "current": {
+    "aqi": 118,
+    "category": "Moderate",
+    "cpcb_color": "#f39c12",
+    "pm2_5": 41.5,
+    "pm10": 85.0,
+    "no2": 22.0,
+    "so2": 8.5,
+    "co": 0.8,
+    "o3": 34.0
+  },
+  "weather": {
+    "temp_c": 26.5,
+    "humidity": 62,
+    "wind_kmh": 11.0,
+    "wind_direction": "SE",
+    "conditions": "Partly Sunny"
+  },
+  "forecast": [
+    { "hour": "00:00", "aqi": 98, "pm2_5": 33.0 },
+    { "hour": "03:00", "aqi": 106, "pm2_5": 36.0 },
+    { "hour": "06:00", "aqi": 124, "pm2_5": 43.0 },
+    { "hour": "08:00", "aqi": 142, "pm2_5": 51.0 },
+    { "hour": "11:00", "aqi": 114, "pm2_5": 39.0 },
+    { "hour": "14:00", "aqi": 88, "pm2_5": 29.0 },
+    { "hour": "17:00", "aqi": 108, "pm2_5": 37.0 },
+    { "hour": "20:00", "aqi": 132, "pm2_5": 47.0 },
+    { "hour": "23:00", "aqi": 104, "pm2_5": 35.0 }
+  ],
+  "safe_windows": [
+    {
+      "start": "13:00",
+      "end": "16:30",
+      "avg_aqi": 88,
+      "category": "Satisfactory",
+      "guidance": "Lowest forecast AQI today (~88) during peak afternoon thermal mixing and coastal breeze."
+    },
+    {
+      "start": "17:00",
+      "end": "19:00",
+      "avg_aqi": 108,
+      "category": "Moderate",
+      "guidance": "Secondary evening transit window; pleasant conditions for normal routines."
+    }
+  ],
+  "source": "open-meteo / CPCB",
+  "fetched_at": "2026-11-18T06:30:00Z",
+  "is_stale": false
+}

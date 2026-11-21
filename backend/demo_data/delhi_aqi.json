@@ -1,0 +1,64 @@
+{
+  "location": {
+    "name": "Delhi (NCR)",
+    "state": "Delhi",
+    "country": "India",
+    "lat": 28.6139,
+    "lon": 77.2090
+  },
+  "station": {
+    "name": "Lodhi Road Continuous Ambient Air Quality Monitoring Station",
+    "distance_km": 2.1
+  },
+  "current": {
+    "aqi": 285,
+    "category": "Very Poor",
+    "cpcb_color": "#e74c3c",
+    "pm2_5": 178.4,
+    "pm10": 288.0,
+    "no2": 45.2,
+    "so2": 14.8,
+    "co": 1.9,
+    "o3": 28.5
+  },
+  "weather": {
+    "temp_c": 11.2,
+    "humidity": 74,
+    "wind_kmh": 4.5,
+    "wind_direction": "NW",
+    "conditions": "Smog / Hazy Calm"
+  },
+  "forecast": [
+    { "hour": "00:00", "aqi": 295, "pm2_5": 185.0 },
+    { "hour": "02:00", "aqi": 305, "pm2_5": 192.0 },
+    { "hour": "04:00", "aqi": 320, "pm2_5": 204.0 },
+    { "hour": "06:00", "aqi": 345, "pm2_5": 222.0 },
+    { "hour": "08:00", "aqi": 360, "pm2_5": 235.0 },
+    { "hour": "10:00", "aqi": 310, "pm2_5": 198.0 },
+    { "hour": "12:00", "aqi": 260, "pm2_5": 160.0 },
+    { "hour": "14:00", "aqi": 235, "pm2_5": 145.0 },
+    { "hour": "16:00", "aqi": 245, "pm2_5": 152.0 },
+    { "hour": "18:00", "aqi": 280, "pm2_5": 175.0 },
+    { "hour": "20:00", "aqi": 310, "pm2_5": 198.0 },
+    { "hour": "22:00", "aqi": 300, "pm2_5": 190.0 }
+  ],
+  "safe_windows": [
+    {
+      "start": "13:00",
+      "end": "16:00",
+      "avg_aqi": 235,
+      "category": "Poor",
+      "guidance": "Lowest forecast AQI today (~235) during peak afternoon thermal mixing."
+    },
+    {
+      "start": "11:30",
+      "end": "13:00",
+      "avg_aqi": 255,
+      "category": "Poor",
+      "guidance": "Secondary transit window; acceptable for urgent short transit with N95 mask."
+    }
+  ],
+  "source": "open-meteo / CPCB",
+  "fetched_at": "2026-11-18T06:30:00Z",
+  "is_stale": false
+}

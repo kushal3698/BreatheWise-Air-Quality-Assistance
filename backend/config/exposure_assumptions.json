@@ -1,0 +1,45 @@
+{
+  "cpcb_aqi_breakpoints": {
+    "pm2_5": [
+      { "c_low": 0, "c_high": 30, "i_low": 0, "i_high": 50 },
+      { "c_low": 31, "c_high": 60, "i_low": 51, "i_high": 100 },
+      { "c_low": 61, "c_high": 90, "i_low": 101, "i_high": 200 },
+      { "c_low": 91, "c_high": 120, "i_low": 201, "i_high": 300 },
+      { "c_low": 121, "c_high": 250, "i_low": 301, "i_high": 400 },
+      { "c_low": 251, "c_high": 500, "i_low": 401, "i_high": 500 }
+    ],
+    "pm10": [
+      { "c_low": 0, "c_high": 50, "i_low": 0, "i_high": 50 },
+      { "c_low": 51, "c_high": 100, "i_low": 51, "i_high": 100 },
+      { "c_low": 101, "c_high": 250, "i_low": 101, "i_high": 200 },
+      { "c_low": 251, "c_high": 350, "i_low": 201, "i_high": 300 },
+      { "c_low": 351, "c_high": 430, "i_low": 301, "i_high": 400 },
+      { "c_low": 431, "c_high": 600, "i_low": 401, "i_high": 500 }
+    ]
+  },
+  "infiltration_factors": {
+    "windows_open": 0.85,
+    "windows_closed_standard": 0.50,
+    "windows_closed_weatherstripped": 0.35,
+    "air_conditioned_sealed": 0.40,
+    "hepa_purifier_active": 0.15,
+    "cr_box_active": 0.18
+  },
+  "activity_inhalation_multipliers": {
+    "sleep": 1.0,
+    "sedentary_desk": 1.2,
+    "light_chores": 1.8,
+    "walking": 2.2,
+    "outdoor_jogging": 4.5,
+    "heavy_exercise": 6.0
+  },
+  "cigarette_equivalent_ug_m3_24h": 22.0,
+  "corsi_rosenthal_box_specs": {
+    "estimated_cadr_cfm": 350,
+    "filters": "4x MERV 13 (20x20x1 or 20x20x2 inches)",
+    "fan": "20-inch box fan",
+    "approx_build_cost_inr": 3500,
+    "commercial_hepa_equivalent_cost_inr": 15000,
+    "annual_maintenance_inr": 1800
+  }
+}
