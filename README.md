@@ -388,7 +388,7 @@ All environment variables have sensible defaults and fallback to complete offlin
 
 | Variable | Default | Purpose |
 |:---|:---|:---|
-| `DEMO_MODE` | `true` | When true, serves pre-calibrated offline telemetry for 30+ Indian cities. |
+| `DEMO_MODE` | `false` in code; `true` in the root `.env.example` | When `true`, uses offline pre-calibrated telemetry and the rule-based assistant, even if `GEMINI_API_KEY` is set. Set to `false` for live Open-Meteo data and Gemini. |
 | `DEFAULT_CITY` | `Delhi` | Fallback city on initial launch. |
 | `LLM_PROVIDER` | `gemini` | `gemini` or `demo` (rule-based fallback). If the model call fails, the assistant falls back to the rule-based provider. |
 | `GEMINI_API_KEY` | `""` | Optional Google AI Studio API key for conversational chat. |
