@@ -8,7 +8,7 @@
 
 [![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Tests-39%20Passed-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-53%20Passed-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 
@@ -52,7 +52,7 @@ Each clause of the official Challenge 6 brief is mapped to the code that impleme
 | Challenge 6 Requirement | Implementation Module | Source File(s) | Verification & Evidence |
 |:---|:---|:---|:---|
 | **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. Live demo is rule-based; Gemini is used when a key is set. |
-| **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD, allergies). Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse). |
+| **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD). Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse). |
 | **Helps Communities Navigate Smog** | School Guidance Protocols & Neighborhood Community Challenges with real-time feedback | `frontend/src/components/SchoolView.tsx`<br>`frontend/src/components/CommunityView.tsx`<br>`backend/app/routers/school.py`<br>`backend/app/routers/community.py` | Operational protocols for morning assembly, sports PE, and recess ventilation. Neighborhood leaderboards with car-free challenges and cumulative community CO₂ counters. |
 | **Suggests Low-Emission Daily Routines** | Dynamic Daily Action Planner with diurnal curve synchronization | `frontend/src/components/PlanCard.tsx`<br>`backend/app/routers/plan.py`<br>`backend/app/services/air_quality.py` | Recommends optimal exercise windows (shifting from morning inversion to afternoon thermal mixing), work-from-home coordination, and trip consolidation. |
 | **Indoor Air Quality Hacks** | Actionable, zero-cost and low-cost indoor mitigation techniques | `frontend/src/components/PlanCard.tsx`<br>`backend/app/knowledge_base/indoor_air_quality.md` | Wet mopping over sweeping, DIY Corsi-Rosenthal filtration boxes, window sealing during smog peaks, timed ventilation during afternoon dips, and kitchen exhaust protocols. |
@@ -121,7 +121,7 @@ The 24-hour curve is a **modelled diurnal shape** anchored to the current estima
 - **Explainable Reasoning**: Every recommendation includes a plain-language **Why**, verified sources, and confidence classification.
 
 ### 3. 🏠 Household Personalization Drawer
-- **Vulnerable Group Tagging**: Add household members with specific sensitivities (asthma, COPD, allergies).
+- **Vulnerable Group Tagging**: Add household members with specific respiratory sensitivities (asthma, COPD).
 - **Synchronized Sensitivity Badges**: Visual chips persist across dashboard and plan views.
 - **Lifestyle & Housing Config**: Set transport modes (petrol car, diesel, EV, two-wheeler), commute distances, floor level, air purifier status, and cooking fuel.
 
@@ -212,7 +212,7 @@ BreatheWise-Air-Quality-Assistance/
 │   │   ├── models/schemas.py        # Pydantic validation models with input limits
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
-│   ├── tests/                       # Pytest test suite (15 tests passing)
+│   ├── tests/                       # Pytest test suite (29 tests passing)
 │   └── requirements.txt             # Python dependencies
 ├── frontend/
 │   ├── src/
@@ -447,20 +447,20 @@ Under official Indian Central Pollution Control Board reporting conventions, amb
 
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **39 automated tests** across frontend and backend suites, integrated into GitHub Actions with code coverage tracking:
+BreatheWise maintains **53 automated tests** (29 backend, 24 frontend) integrated into GitHub Actions. Backend line coverage is about 72% (pytest-cov), with CI enforcing a 65% minimum, plus ruff, black and ESLint checks:
 
 ```bash
 # Frontend Tests (Vitest — 24 passed)
 cd frontend
 npm test -- --run
 
-# Backend Tests (Pytest with Coverage — 15 passed)
+# Backend Tests (Pytest with Coverage — 29 passed)
 python -m pytest backend/tests -v
 ```
 
 ### GitHub Actions CI Workflow (`.github/workflows/ci.yml`)
 - **`frontend-ci`**: Node 20 environment, dependency caching, Vitest execution, and production build verification.
-- **`backend-ci`**: Python 3.11 environment, Pytest execution with coverage across schemas, safety rules, and CPCB algorithms.
+- **`backend-ci`**: Python 3.11 environment, ruff and black checks, then Pytest with coverage across schemas, safety rules, LLM-provider fallbacks, and CPCB algorithms.
 - **`security-audit`**: Automated secret scanning ensuring zero credentials exist in version control.
 
 ---
@@ -490,7 +490,7 @@ BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURIT
 ## 🛡️ Responsible AI & Medical Safeguards
 
 1. **Non-Medical Disclaimer**: BreatheWise is a decision-support and awareness platform, not a medical diagnosis device. Disclaimers are prominently displayed.
-2. **Asthma & Vulnerability Triggers**: Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse).
+2. **Asthma & Vulnerability Triggers**: Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse, i.e. above 200). These guardrails are applied after every provider (rule-based or LLM) so a model can never omit them, and impact figures always come from the deterministic engine, never from model output.
 3. **Deterministic Math**: Impact figures are computed mathematically rather than generated by LLMs to eliminate numerical hallucinations.
 
 ---

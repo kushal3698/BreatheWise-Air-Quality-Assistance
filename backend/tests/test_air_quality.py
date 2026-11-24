@@ -1,11 +1,11 @@
-import pytest
 from app.services.air_quality import (
+    CPCB_BREAKPOINTS,
     calculate_cpcb_aqi,
     calculate_sub_index,
-    get_aqi_category_and_color,
     compute_safe_windows,
-    CPCB_BREAKPOINTS
+    get_aqi_category_and_color,
 )
+
 
 def test_cpcb_aqi_calculation():
     # Good AQI
@@ -30,16 +30,18 @@ def test_cpcb_aqi_calculation():
     aqi_delhi = calculate_cpcb_aqi(pm2_5=178.4, pm10=288.0, no2=45.2)
     assert aqi_delhi == 345
 
+
 def test_aqi_categories_and_colors():
     cat, col = get_aqi_category_and_color(45)
     assert cat == "Good"
     assert col == "#2ecc71"
-    
+
     cat, col = get_aqi_category_and_color(285)
     assert cat == "Poor"
-    
+
     cat, col = get_aqi_category_and_color(450)
     assert cat == "Severe"
+
 
 def test_safe_windows_derived_from_forecast():
     """Verify safe window is derived mathematically from the minimum in the diurnal forecast."""
@@ -50,7 +52,7 @@ def test_safe_windows_derived_from_forecast():
         {"hour": "12:00", "aqi": 240, "pm2_5": 150.0},
         {"hour": "14:00", "aqi": 220, "pm2_5": 135.0},
         {"hour": "16:00", "aqi": 230, "pm2_5": 140.0},
-        {"hour": "18:00", "aqi": 290, "pm2_5": 180.0}
+        {"hour": "18:00", "aqi": 290, "pm2_5": 180.0},
     ]
     safe = compute_safe_windows(forecast)
     assert len(safe) > 0

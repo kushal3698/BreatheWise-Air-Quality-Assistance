@@ -4,6 +4,7 @@ from app.services.llm.demo_llm import DemoLLMProvider
 from app.services.llm.gemini import GeminiLLMProvider
 from app.services.llm.openai_compat import OpenAICompatLLMProvider
 
+
 def get_llm_provider() -> BaseLLMProvider:
     if settings.demo_mode:
         return DemoLLMProvider()

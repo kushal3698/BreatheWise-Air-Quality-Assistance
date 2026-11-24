@@ -1,10 +1,13 @@
 from fastapi import APIRouter
+
 from app.models.schemas import DailyPlanRequest, DailyPlanResponse
 from app.services.air_quality import fetch_air_quality
-from app.services.rag import retriever
 from app.services.llm.factory import get_llm_provider
+from app.services.rag import retriever
+from app.services.safety import enforce_plan_guardrails
 
 router = APIRouter(prefix="/api", tags=["Planning"])
+
 
 @router.post("/plan", response_model=DailyPlanResponse)
 async def generate_daily_plan(request: DailyPlanRequest) -> DailyPlanResponse:
@@ -13,12 +16,12 @@ async def generate_daily_plan(request: DailyPlanRequest) -> DailyPlanResponse:
       1. Low-emission daily routines
       2. Indoor air quality hacks
       3. Sustainable alternatives tailored to location & lifestyle
-      
+
     Includes deterministic before-vs-after impact calculations and RAG-grounded health advice.
     """
     city = request.city or "Delhi"
     aqi_data = await fetch_air_quality(city)
-    
+
     # RAG Context Retrieval grounded in clinical guides
     query = f"daily air pollution plan routines safe window indoor ventilation {city}"
     if request.household and request.household.members:
@@ -27,16 +30,18 @@ async def generate_daily_plan(request: DailyPlanRequest) -> DailyPlanResponse:
             sensitivities.extend(m.sensitivities)
         if sensitivities:
             query += f" {' '.join(sensitivities)}"
-            
+
     rag_context = retriever.retrieve(query, top_k=3)
-    
+
     llm = get_llm_provider()
     plan_dict = await llm.generate_plan(
-        city=city,
-        aqi_data=aqi_data,
-        household=request.household,
-        rag_context=rag_context,
-        language=request.language
+        city=city, aqi_data=aqi_data, household=request.household, rag_context=rag_context, language=request.language
     )
-    
-    return plan_dict
+
+    current = aqi_data.get("current", {})
+    return enforce_plan_guardrails(
+        plan_dict,
+        aqi=int(current.get("aqi", 0)),
+        category=str(current.get("category", "")),
+        household=request.household,
+    )

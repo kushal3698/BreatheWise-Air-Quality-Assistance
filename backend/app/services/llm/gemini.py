@@ -1,16 +1,34 @@
 import json
-from typing import Dict, Any, List, Optional
+import logging
+from typing import Any, Dict, List, Optional
+
 import httpx
+
 from app.config import settings
-from app.models.schemas import HouseholdProfile
+from app.models.schemas import DailyPlanResponse, HouseholdProfile
 from app.services.llm.base import BaseLLMProvider
 from app.services.llm.demo_llm import DemoLLMProvider
+
+logger = logging.getLogger(__name__)
+
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+
+
+def _endpoint() -> str:
+    """Model endpoint URL. The API key is sent in a header, never in the URL, so it cannot leak into logs."""
+    return GEMINI_ENDPOINT.format(model=settings.gemini_model)
+
+
+def _headers() -> Dict[str, str]:
+    return {"x-goog-api-key": settings.gemini_api_key, "Content-Type": "application/json"}
+
 
 class GeminiLLMProvider(BaseLLMProvider):
     """
     Gemini API integration (configurable via GEMINI_MODEL).
     If the model call fails, times out, or no API key is provided, the assistant falls back to the rule-based provider.
     """
+
     def __init__(self):
         self.demo = DemoLLMProvider()
 
@@ -20,7 +38,7 @@ class GeminiLLMProvider(BaseLLMProvider):
         aqi_data: Dict[str, Any],
         household: Optional[HouseholdProfile],
         rag_context: List[Dict[str, Any]],
-        language: str = "en"
+        language: str = "en",
     ) -> Dict[str, Any]:
         if not settings.gemini_api_key:
             return await self.demo.generate_plan(city, aqi_data, household, rag_context, language)
@@ -49,32 +67,30 @@ Retrieved Guidance: {json.dumps([c['content'] for c in rag_context])}
 Respond ONLY with valid JSON matching the DailyPlan schema.
 """
 
+        # Deterministic plan (rule-based). Its impact_summary comes from the impact engine and is
+        # the ONLY source of numeric impact figures, regardless of what the LLM returns.
+        demo_plan = await self.demo.generate_plan(city, aqi_data, household, rag_context, language)
+
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
             payload = {
                 "contents": [{"parts": [{"text": f"{system_instruction}\n\n{user_prompt}"}]}],
-                "generationConfig": {
-                    "responseMimeType": "application/json",
-                    "temperature": 0.3
-                }
+                "generationConfig": {"responseMimeType": "application/json", "temperature": 0.3},
             }
             async with httpx.AsyncClient(timeout=12.0) as client:
-                res = await client.post(url, json=payload)
-                if res.status_code == 200:
-                    data = res.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        text_content = candidates[0]["content"]["parts"][0]["text"]
-                        parsed = json.loads(text_content)
-                        # Ensure impact summary is present
-                        if "impact_summary" not in parsed:
-                            demo_plan = await self.demo.generate_plan(city, aqi_data, household, rag_context, language)
-                            parsed["impact_summary"] = demo_plan["impact_summary"]
-                        return parsed
-        except Exception:
-            pass
+                res = await client.post(_endpoint(), json=payload, headers=_headers())
+            if res.status_code == 200:
+                candidates = res.json().get("candidates", [])
+                if candidates:
+                    parsed = json.loads(candidates[0]["content"]["parts"][0]["text"])
+                    parsed["impact_summary"] = demo_plan["impact_summary"]
+                    # Reject malformed model output instead of returning a broken response
+                    return DailyPlanResponse(**parsed).model_dump()
+            else:
+                logger.warning("Gemini plan request returned HTTP %s; using rule-based plan.", res.status_code)
+        except Exception as exc:
+            logger.warning("Gemini plan call failed (%s); using rule-based plan.", type(exc).__name__)
 
-        return await self.demo.generate_plan(city, aqi_data, household, rag_context, language)
+        return demo_plan
 
     async def generate_chat_reply(
         self,
@@ -84,10 +100,12 @@ Respond ONLY with valid JSON matching the DailyPlan schema.
         household: Optional[HouseholdProfile],
         rag_context: List[Dict[str, Any]],
         language: str = "en",
-        history: Optional[List[Dict[str, str]]] = None
+        history: Optional[List[Dict[str, str]]] = None,
     ) -> Dict[str, Any]:
         if not settings.gemini_api_key:
-            return await self.demo.generate_chat_reply(message, city, aqi_data, household, rag_context, language, history)
+            return await self.demo.generate_chat_reply(
+                message, city, aqi_data, household, rag_context, language, history
+            )
 
         prompt = f"""
 You are BreatheWise, an environmental health and low-emission assistant.
@@ -104,29 +122,26 @@ Explain the 'Why', provide safe window timing, and highlight quantified before-v
 Never diagnose illness. Include medical safety caution if high AQI or asthma.
 """
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.4
-                }
-            }
+            payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.4}}
             async with httpx.AsyncClient(timeout=10.0) as client:
-                res = await client.post(url, json=payload)
-                if res.status_code == 200:
-                    data = res.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        reply_text = candidates[0]["content"]["parts"][0]["text"]
-                        demo_chat = await self.demo.generate_chat_reply(message, city, aqi_data, household, rag_context, language, history)
-                        return {
-                            "reply": reply_text,
-                            "grounded_sources": [c["source"] for c in rag_context][:3] or demo_chat["grounded_sources"],
-                            "suggested_questions": demo_chat["suggested_questions"],
-                            "safe_window_summary": demo_chat["safe_window_summary"],
-                            "disclaimer": demo_chat["disclaimer"]
-                        }
-        except Exception:
-            pass
+                res = await client.post(_endpoint(), json=payload, headers=_headers())
+            if res.status_code == 200:
+                candidates = res.json().get("candidates", [])
+                if candidates:
+                    reply_text = candidates[0]["content"]["parts"][0]["text"]
+                    demo_chat = await self.demo.generate_chat_reply(
+                        message, city, aqi_data, household, rag_context, language, history
+                    )
+                    return {
+                        "reply": reply_text,
+                        "grounded_sources": [c["source"] for c in rag_context][:3] or demo_chat["grounded_sources"],
+                        "suggested_questions": demo_chat["suggested_questions"],
+                        "safe_window_summary": demo_chat["safe_window_summary"],
+                        "disclaimer": demo_chat["disclaimer"],
+                    }
+            else:
+                logger.warning("Gemini chat request returned HTTP %s; using rule-based reply.", res.status_code)
+        except Exception as exc:
+            logger.warning("Gemini chat call failed (%s); using rule-based reply.", type(exc).__name__)
 
         return await self.demo.generate_chat_reply(message, city, aqi_data, household, rag_context, language, history)

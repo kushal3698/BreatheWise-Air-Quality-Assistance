@@ -1,7 +1,9 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 # --- Household Models ---
+
 
 class HouseholdMember(BaseModel):
     id: Optional[str] = None
@@ -9,11 +11,16 @@ class HouseholdMember(BaseModel):
     age: int
     sensitivities: List[str] = Field(default_factory=list, description="e.g. asthma, allergies, hypertension")
 
+
 class TransportProfile(BaseModel):
-    mode: str = Field(default="petrol_car", description="petrol_car | diesel_car | ev_car | petrol_twowheeler | bus | metro | walking | bicycle")
+    mode: str = Field(
+        default="petrol_car",
+        description="petrol_car | diesel_car | ev_car | petrol_twowheeler | bus | metro | walking | bicycle",
+    )
     vehicles: int = Field(default=1)
     school_run_km: float = Field(default=4.0)
     commute_km: float = Field(default=15.0)
+
 
 class HomeProfile(BaseModel):
     type: str = Field(default="apartment", description="apartment | independent_house")
@@ -21,13 +28,16 @@ class HomeProfile(BaseModel):
     has_purifier: bool = Field(default=False)
     cooking_fuel: str = Field(default="LPG", description="LPG | induction | wood | piped_gas")
 
+
 class HouseholdProfile(BaseModel):
     members: List[HouseholdMember] = Field(default_factory=list)
     transport: TransportProfile = Field(default_factory=TransportProfile)
     home: HomeProfile = Field(default_factory=HomeProfile)
     work_from_home_days: int = Field(default=2)
 
+
 # --- Air Quality Models ---
+
 
 class AirQualityLocation(BaseModel):
     name: str
@@ -36,9 +46,11 @@ class AirQualityLocation(BaseModel):
     lat: float
     lon: float
 
+
 class AirQualityStation(BaseModel):
     name: str
     distance_km: float
+
 
 class CurrentAQI(BaseModel):
     aqi: int
@@ -51,6 +63,7 @@ class CurrentAQI(BaseModel):
     co: Optional[float] = None
     o3: Optional[float] = None
 
+
 class WeatherInfo(BaseModel):
     temp_c: float
     humidity: int
@@ -58,10 +71,12 @@ class WeatherInfo(BaseModel):
     wind_direction: Optional[str] = "NW"
     conditions: Optional[str] = "Hazy"
 
+
 class HourlyForecast(BaseModel):
     hour: str
     aqi: int
     pm2_5: float
+
 
 class SafeWindow(BaseModel):
     start: str
@@ -69,6 +84,7 @@ class SafeWindow(BaseModel):
     avg_aqi: int
     category: str
     guidance: str
+
 
 class AirQualityResponse(BaseModel):
     location: AirQualityLocation
@@ -81,7 +97,9 @@ class AirQualityResponse(BaseModel):
     fetched_at: str
     is_stale: bool = False
 
+
 # --- Plan Models ---
+
 
 class ActionImpact(BaseModel):
     exposure_reduction_pct: Optional[float] = None
@@ -89,22 +107,26 @@ class ActionImpact(BaseModel):
     cost_saved_inr: Optional[float] = None
     confidence: str = "Modelled estimate"
 
+
 class PlanActionItem(BaseModel):
     action: str
     why: str
     effort: str = "low"  # low | medium | high
-    cost: str = "free"    # free | low | medium | investment
+    cost: str = "free"  # free | low | medium | investment
     impact: ActionImpact
     sources: List[str] = Field(default_factory=list)
+
 
 class PlanTimelineItem(BaseModel):
     time: str
     advice: str
 
+
 class PlanSections(BaseModel):
     low_emission_routines: List[PlanActionItem] = Field(default_factory=list)
     indoor_air_hacks: List[PlanActionItem] = Field(default_factory=list)
     sustainable_alternatives: List[PlanActionItem] = Field(default_factory=list)
+
 
 class ImpactSummary(BaseModel):
     exposure_reduction_pct: float
@@ -113,10 +135,12 @@ class ImpactSummary(BaseModel):
     cigarettes_avoided_day: Optional[float] = 0.0
     confidence: str = "Modelled estimate"
 
+
 class DailyPlanRequest(BaseModel):
     city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[\w\s()\-.]+$")
     language: str = Field(default="en", pattern=r"^(en|hi|te|ta)$")
     household: Optional[HouseholdProfile] = None
+
 
 class DailyPlanResponse(BaseModel):
     summary: str
@@ -127,18 +151,24 @@ class DailyPlanResponse(BaseModel):
     cautions: List[str] = Field(default_factory=list)
     disclaimer: str
 
+
 # --- Chat Models ---
+
 
 class ChatMessage(BaseModel):
     role: str
     content: str
 
+
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=1000, description="User conversational query capped at 1000 characters")
+    message: str = Field(
+        ..., min_length=1, max_length=1000, description="User conversational query capped at 1000 characters"
+    )
     city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[\w\s()\-.]+$")
     language: str = Field(default="en", pattern=r"^(en|hi|te|ta)$")
     household: Optional[HouseholdProfile] = None
     history: List[ChatMessage] = Field(default_factory=list)
+
 
 class ChatResponse(BaseModel):
     reply: str
@@ -147,7 +177,9 @@ class ChatResponse(BaseModel):
     safe_window_summary: Optional[str] = None
     disclaimer: str
 
+
 # --- Community & School Models ---
+
 
 class CommunityChallenge(BaseModel):
     id: str
@@ -158,12 +190,14 @@ class CommunityChallenge(BaseModel):
     target_date: str
     completed: bool = False
 
+
 class CommunityLeaderboardEntry(BaseModel):
     neighbourhood: str
     city: str
     participants: int
     co2_avoided_kg: float
     car_free_trips: int
+
 
 class SchoolGuidanceResponse(BaseModel):
     aqi: int

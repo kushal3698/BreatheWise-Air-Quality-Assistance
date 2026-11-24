@@ -1,11 +1,13 @@
-import time
 import logging
+import time
 from collections import defaultdict
+
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from app.config import settings
-from app.routers import aqi, plan, chat, impact, community, school
+from app.routers import aqi, chat, community, impact, plan, school
 
 # Configure structured application logger
 logger = logging.getLogger("breathewise")
@@ -16,11 +18,12 @@ app = FastAPI(
     description="GenAI companion for cleaner air and smarter days - Urban Air Quality Assistant",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # In-memory rate limiting table: client_ip -> list of epoch timestamps
 _REQUEST_HISTORY: dict[str, list[float]] = defaultdict(list)
+
 
 # Rate Limiting Middleware
 @app.middleware("http")
@@ -40,14 +43,15 @@ async def rate_limiting_middleware(request: Request, call_next):
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={
                 "error": "Rate limit exceeded. Maximum 120 requests per minute allowed.",
-                "retry_after_seconds": 60
+                "retry_after_seconds": 60,
             },
-            headers={"Retry-After": "60"}
+            headers={"Retry-After": "60"},
         )
 
     history.append(now)
     _REQUEST_HISTORY[client_ip] = history
     return await call_next(request)
+
 
 # Security Headers Middleware
 @app.middleware("http")
@@ -63,6 +67,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
+
 # Global Exception Handler (Suppresses Internal Stack Traces)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -73,11 +78,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": "An internal server error occurred. Please try again later.",
-            "status": 500
-        }
+        content={"error": "An internal server error occurred. Please try again later.", "status": 500},
     )
+
 
 # CORS Middleware (Restricted to frontend origins)
 app.add_middleware(
@@ -96,6 +99,7 @@ app.include_router(impact.router)
 app.include_router(community.router)
 app.include_router(school.router)
 
+
 @app.get("/", tags=["Health"])
 async def root() -> dict[str, str | bool | None]:
     """
@@ -107,8 +111,9 @@ async def root() -> dict[str, str | bool | None]:
         "status": "healthy",
         "docs_url": "/docs",
         "demo_mode": settings.demo_mode,
-        "llm_provider": settings.llm_provider
+        "llm_provider": settings.llm_provider,
     }
+
 
 @app.get("/api/health", tags=["Health"])
 async def health_check() -> dict[str, str | bool | None]:
@@ -119,5 +124,5 @@ async def health_check() -> dict[str, str | bool | None]:
         "status": "ok",
         "demo_mode": settings.demo_mode,
         "llm_provider": settings.llm_provider,
-        "aqi_provider": settings.aqi_provider
+        "aqi_provider": settings.aqi_provider,
     }

@@ -147,7 +147,8 @@ export default function HomePage() {
       ).slice(0, 7)
     : [];
 
-  // Initial mount sync for live data
+  // Initial mount sync for live data. Intentionally runs once: later city, language and
+  // household changes are handled by explicit handlers (reloadPlanForProfile, city selection).
   useEffect(() => {
     fetchAQI(city)
       .then(data => {
@@ -166,6 +167,7 @@ export default function HomePage() {
       .catch(() => {
         setIsLiveConnected(false);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update plan when language or household changes

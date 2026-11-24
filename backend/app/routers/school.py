@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Query
+
 from app.models.schemas import SchoolGuidanceResponse
 from app.services.air_quality import fetch_air_quality
 
 router = APIRouter(prefix="/api/school", tags=["School Guidance"])
+
 
 @router.get("/guidance", response_model=SchoolGuidanceResponse)
 async def get_school_guidance(city: str = Query("Delhi")):
@@ -30,7 +32,7 @@ async def get_school_guidance(city: str = Query("Delhi")):
     precautions = [
         "Ensure school infirmary is stocked with clean spacer devices and prescribed reliever inhalers.",
         "Enforce a 200-meter zero-idling vehicle zone around school entry gates during pickup and drop-off.",
-        "Exempt students with certified respiratory sensitivities from any compulsory outdoor drills."
+        "Exempt students with certified respiratory sensitivities from any compulsory outdoor drills.",
     ]
 
     return SchoolGuidanceResponse(
@@ -41,5 +43,5 @@ async def get_school_guidance(city: str = Query("Delhi")):
         sports_guideline=sports,
         recess_guideline=recess,
         classroom_guideline=classroom,
-        precautions_for_asthmatic_students=precautions
+        precautions_for_asthmatic_students=precautions,
     )

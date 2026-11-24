@@ -1,4 +1,5 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
 import httpx
 
 KNOWN_LOCATIONS: Dict[str, Dict[str, Any]] = {
@@ -16,11 +17,23 @@ KNOWN_LOCATIONS: Dict[str, Dict[str, Any]] = {
     "lucknow": {"name": "Lucknow", "state": "Uttar Pradesh", "country": "India", "lat": 26.8467, "lon": 80.9462},
     "patna": {"name": "Patna", "state": "Bihar", "country": "India", "lat": 25.5941, "lon": 85.1376},
     "vijayawada": {"name": "Vijayawada", "state": "Andhra Pradesh", "country": "India", "lat": 16.5062, "lon": 80.6480},
-    "visakhapatnam": {"name": "Visakhapatnam", "state": "Andhra Pradesh", "country": "India", "lat": 17.6868, "lon": 83.2185},
+    "visakhapatnam": {
+        "name": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "country": "India",
+        "lat": 17.6868,
+        "lon": 83.2185,
+    },
     "vizag": {"name": "Visakhapatnam", "state": "Andhra Pradesh", "country": "India", "lat": 17.6868, "lon": 83.2185},
     "jaipur": {"name": "Jaipur", "state": "Rajasthan", "country": "India", "lat": 26.9124, "lon": 75.7873},
     "noida": {"name": "Noida", "state": "Uttar Pradesh", "country": "India", "lat": 28.5355, "lon": 77.3910},
-    "greater noida": {"name": "Greater Noida", "state": "Uttar Pradesh", "country": "India", "lat": 28.4744, "lon": 77.5040},
+    "greater noida": {
+        "name": "Greater Noida",
+        "state": "Uttar Pradesh",
+        "country": "India",
+        "lat": 28.4744,
+        "lon": 77.5040,
+    },
     "gurugram": {"name": "Gurugram", "state": "Haryana", "country": "India", "lat": 28.4595, "lon": 77.0266},
     "gurgaon": {"name": "Gurugram", "state": "Haryana", "country": "India", "lat": 28.4595, "lon": 77.0266},
     "chandigarh": {"name": "Chandigarh", "state": "Chandigarh", "country": "India", "lat": 30.7333, "lon": 76.7794},
@@ -38,18 +51,25 @@ KNOWN_LOCATIONS: Dict[str, Dict[str, Any]] = {
     "ludhiana": {"name": "Ludhiana", "state": "Punjab", "country": "India", "lat": 30.9010, "lon": 75.8573},
     "dehradun": {"name": "Dehradun", "state": "Uttarakhand", "country": "India", "lat": 30.3165, "lon": 78.0322},
     "ranchi": {"name": "Ranchi", "state": "Jharkhand", "country": "India", "lat": 23.3441, "lon": 85.3096},
-    "thiruvananthapuram": {"name": "Thiruvananthapuram", "state": "Kerala", "country": "India", "lat": 8.5241, "lon": 76.9366},
+    "thiruvananthapuram": {
+        "name": "Thiruvananthapuram",
+        "state": "Kerala",
+        "country": "India",
+        "lat": 8.5241,
+        "lon": 76.9366,
+    },
     "trivandrum": {"name": "Thiruvananthapuram", "state": "Kerala", "country": "India", "lat": 8.5241, "lon": 76.9366},
     "mysuru": {"name": "Mysuru", "state": "Karnataka", "country": "India", "lat": 12.2958, "lon": 76.6394},
     "mangalore": {"name": "Mangaluru", "state": "Karnataka", "country": "India", "lat": 12.9141, "lon": 74.8560},
     "tirupati": {"name": "Tirupati", "state": "Andhra Pradesh", "country": "India", "lat": 13.6288, "lon": 79.4192},
 }
 
+
 async def geocode_city(city_query: str) -> Dict[str, Any]:
     normalized = city_query.strip().lower()
     if normalized in KNOWN_LOCATIONS:
         return KNOWN_LOCATIONS[normalized]
-        
+
     for k, v in KNOWN_LOCATIONS.items():
         if k in normalized or normalized in k:
             return v
@@ -58,7 +78,7 @@ async def geocode_city(city_query: str) -> Dict[str, Any]:
         async with httpx.AsyncClient(timeout=2.0) as client:
             resp = await client.get(
                 "https://geocoding-api.open-meteo.com/v1/search",
-                params={"name": city_query, "count": 1, "language": "en", "format": "json"}
+                params={"name": city_query, "count": 1, "language": "en", "format": "json"},
             )
             if resp.status_code == 200:
                 data = resp.json()

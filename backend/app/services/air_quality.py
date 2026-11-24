@@ -1,7 +1,8 @@
 import json
 import time
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 import httpx
 
 from app.config import settings
@@ -61,13 +62,14 @@ CPCB_BREAKPOINTS = {
     ],
 }
 
+
 def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]], round_conc: bool = True) -> int:
     """
     Computes a single pollutant sub-index using CPCB piecewise linear interpolation.
-    
+
     Formula:
         I_p = I_lo + ((I_hi - I_lo) / (B_hi - B_lo)) * (C_p - B_lo)
-        
+
     Args:
         conc: Ambient pollutant concentration in µg/m³ (or mg/m³ for CO).
         breakpoints: Ordered list of CPCB breakpoint dictionaries with c_low, c_high, i_low, i_high.
@@ -88,12 +90,12 @@ def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]], round_
         elif prev_high < c_eval < bp["c_low"]:
             matched_bp = bp
             break
-            
+
     if not matched_bp:
         if c_eval > breakpoints[-1]["c_high"]:
             return int(breakpoints[-1]["i_high"])
         return 0
-        
+
     i_lo, i_hi = matched_bp["i_low"], matched_bp["i_high"]
     c_lo, c_high = matched_bp["c_low"], matched_bp["c_high"]
     if c_high == c_lo:
@@ -101,21 +103,22 @@ def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]], round_
     val = ((i_hi - i_lo) / (c_high - c_lo)) * (c_eval - c_lo) + i_lo
     return min(500, max(0, round(val)))
 
+
 def calculate_cpcb_aqi(
-    pm2_5: Optional[float] = None, 
+    pm2_5: Optional[float] = None,
     pm10: Optional[float] = None,
     no2: Optional[float] = None,
     so2: Optional[float] = None,
     co: Optional[float] = None,
     o3: Optional[float] = None,
-    round_conc: bool = True
+    round_conc: bool = True,
 ) -> int:
     """
     Calculates National Air Quality Index (NAQI) as max sub-index across all monitored pollutants.
-    
+
     Formula:
         I_AQI = max(I_PM2.5, I_PM10, I_NO2, I_SO2, I_CO, I_O3)
-        
+
     Returns:
         Composite integer AQI (0-500).
     """
@@ -131,8 +134,9 @@ def calculate_cpcb_aqi(
     for pol, val in pollutants.items():
         if val is not None and pol in CPCB_BREAKPOINTS:
             sub_indices.append(calculate_sub_index(float(val), CPCB_BREAKPOINTS[pol], round_conc=round_conc))
-            
+
     return max(sub_indices) if sub_indices else 0
+
 
 def get_aqi_category_and_color(aqi: int) -> tuple[str, str]:
     if aqi <= 50:
@@ -148,15 +152,13 @@ def get_aqi_category_and_color(aqi: int) -> tuple[str, str]:
     else:
         return "Severe", "#8e44ad"
 
+
 def compute_safe_windows(hourly_forecast: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not hourly_forecast or len(hourly_forecast) < 4:
         return []
-    
+
     # Analyze daylight hours (approx 07:00 to 20:00)
-    daylight = [
-        item for item in hourly_forecast 
-        if 7 <= int(item["hour"].split(":")[0]) <= 20
-    ]
+    daylight = [item for item in hourly_forecast if 7 <= int(item["hour"].split(":")[0]) <= 20]
     if not daylight:
         daylight = hourly_forecast
 
@@ -164,19 +166,21 @@ def compute_safe_windows(hourly_forecast: List[Dict[str, Any]]) -> List[Dict[str
     window_candidates = []
     w_size = 3
     for i in range(len(daylight) - w_size + 1):
-        window = daylight[i:i + w_size]
+        window = daylight[i : i + w_size]
         avg_aqi = int(sum(w["aqi"] for w in window) / w_size)
         start_time = window[0]["hour"]
         end_time = window[-1]["hour"]
-        window_candidates.append({
-            "start": start_time,
-            "end": end_time,
-            "avg_aqi": avg_aqi,
-        })
-    
+        window_candidates.append(
+            {
+                "start": start_time,
+                "end": end_time,
+                "avg_aqi": avg_aqi,
+            }
+        )
+
     window_candidates.sort(key=lambda x: x["avg_aqi"])
     safe_windows = []
-    
+
     if window_candidates:
         best = window_candidates[0]
         cat, _ = get_aqi_category_and_color(best["avg_aqi"])
@@ -185,35 +189,40 @@ def compute_safe_windows(hourly_forecast: List[Dict[str, Any]]) -> List[Dict[str
             guidance += " Still in Poor/Very Poor range; keep outdoor duration short and wear N95."
         else:
             guidance += " Suitable for errands, school transport or short outdoor exercise."
-            
-        safe_windows.append({
-            "start": best["start"],
-            "end": best["end"],
-            "avg_aqi": best["avg_aqi"],
-            "category": cat,
-            "guidance": guidance
-        })
-        
+
+        safe_windows.append(
+            {
+                "start": best["start"],
+                "end": best["end"],
+                "avg_aqi": best["avg_aqi"],
+                "category": cat,
+                "guidance": guidance,
+            }
+        )
+
         # Add secondary window if distinct
         for cand in window_candidates[1:]:
             if abs(int(cand["start"].split(":")[0]) - int(best["start"].split(":")[0])) >= 4:
                 c_cat, _ = get_aqi_category_and_color(cand["avg_aqi"])
-                safe_windows.append({
-                    "start": cand["start"],
-                    "end": cand["end"],
-                    "avg_aqi": cand["avg_aqi"],
-                    "category": c_cat,
-                    "guidance": "Alternative window for brief transit or household ventilation."
-                })
+                safe_windows.append(
+                    {
+                        "start": cand["start"],
+                        "end": cand["end"],
+                        "avg_aqi": cand["avg_aqi"],
+                        "category": c_cat,
+                        "guidance": "Alternative window for brief transit or household ventilation.",
+                    }
+                )
                 break
-                
+
     return safe_windows
+
 
 async def fetch_air_quality(city: str) -> Dict[str, Any]:
     loc = await geocode_city(city)
     cache_key = f"{loc['lat']:.3f}_{loc['lon']:.3f}"
     now = time.time()
-    
+
     if cache_key in _CACHE:
         cached_entry = _CACHE[cache_key]
         if now - cached_entry["cached_at"] < settings.aqi_cache_ttl_seconds:
@@ -227,6 +236,7 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
 
     try:
         import asyncio
+
         async with httpx.AsyncClient(timeout=3.0) as client:
             # Fetch Air Quality and Weather in parallel with asyncio.gather
             aq_task = client.get(
@@ -237,8 +247,8 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
                     "current": "pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone",
                     "hourly": "pm10,pm2_5",
                     "forecast_days": 2,
-                    "timezone": "auto"
-                }
+                    "timezone": "auto",
+                },
             )
             weather_task = client.get(
                 "https://api.open-meteo.com/v1/forecast",
@@ -246,15 +256,15 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
                     "latitude": loc["lat"],
                     "longitude": loc["lon"],
                     "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m",
-                    "timezone": "auto"
-                }
+                    "timezone": "auto",
+                },
             )
             aq_resp, weather_resp = await asyncio.gather(aq_task, weather_task)
 
             if aq_resp.status_code == 200 and weather_resp.status_code == 200:
                 aq_data = aq_resp.json()
                 w_data = weather_resp.json()
-                
+
                 curr_aq = aq_data.get("current", {})
                 pm2_5 = float(curr_aq.get("pm2_5", 50.0))
                 pm10 = float(curr_aq.get("pm10", 80.0))
@@ -264,28 +274,21 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
                 if co is not None:
                     co = round(co / 1000.0, 2)  # µg/m3 to mg/m3 approx
                 o3 = curr_aq.get("ozone")
-                
-                aqi = calculate_cpcb_aqi(
-                    pm2_5=pm2_5, 
-                    pm10=pm10, 
-                    no2=no2, 
-                    so2=so2, 
-                    co=co, 
-                    o3=o3
-                )
+
+                aqi = calculate_cpcb_aqi(pm2_5=pm2_5, pm10=pm10, no2=no2, so2=so2, co=co, o3=o3)
                 category, color = get_aqi_category_and_color(aqi)
 
                 curr_w = w_data.get("current", {})
                 temp_c = float(curr_w.get("temperature_2m", 24.0))
                 humidity = int(curr_w.get("relative_humidity_2m", 50))
                 wind_kmh = float(curr_w.get("wind_speed_10m", 8.0))
-                
+
                 # Hourly forecast parsing (next 12 intervals, 2-hourly)
                 hourly = aq_data.get("hourly", {})
                 times = hourly.get("time", [])
                 h_pm25 = hourly.get("pm2_5", [])
                 h_pm10 = hourly.get("pm10", [])
-                
+
                 forecast_items = []
                 for i in range(0, min(len(times), 24), 2):
                     t_str = times[i]
@@ -293,22 +296,15 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
                     val_25 = float(h_pm25[i]) if i < len(h_pm25) and h_pm25[i] is not None else pm2_5
                     val_10 = float(h_pm10[i]) if i < len(h_pm10) and h_pm10[i] is not None else pm10
                     h_aqi = calculate_cpcb_aqi(val_25, val_10)
-                    forecast_items.append({
-                        "hour": hour_label,
-                        "aqi": h_aqi,
-                        "pm2_5": round(val_25, 1)
-                    })
+                    forecast_items.append({"hour": hour_label, "aqi": h_aqi, "pm2_5": round(val_25, 1)})
 
                 safe_windows = compute_safe_windows(forecast_items)
-                
+
                 station_distance = round(1.5 + (hash(loc["name"]) % 25) / 10.0, 1)
-                
+
                 result = {
                     "location": loc,
-                    "station": {
-                        "name": f"{loc['name']} Continuous Ambient Station",
-                        "distance_km": station_distance
-                    },
+                    "station": {"name": f"{loc['name']} Continuous Ambient Station", "distance_km": station_distance},
                     "current": {
                         "aqi": aqi,
                         "category": category,
@@ -325,21 +321,18 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
                         "humidity": humidity,
                         "wind_kmh": round(wind_kmh, 1),
                         "wind_direction": "NW",
-                        "conditions": "Inversion Smog" if aqi > 250 else "Haze / Clear"
+                        "conditions": "Inversion Smog" if aqi > 250 else "Haze / Clear",
                     },
                     "forecast": forecast_items,
                     "safe_windows": safe_windows,
                     "source": "open-meteo / CPCB",
                     "fetched_at": datetime.now(timezone.utc).isoformat(),
-                    "is_stale": False
+                    "is_stale": False,
                 }
-                
-                _CACHE[cache_key] = {
-                    "cached_at": now,
-                    "data": result
-                }
+
+                _CACHE[cache_key] = {"cached_at": now, "data": result}
                 return result
-    except Exception as e:
+    except Exception:
         # Fallback to cached or demo if network fails
         if cache_key in _CACHE:
             fallback = _CACHE[cache_key]["data"]
@@ -348,11 +341,12 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
 
     return load_demo_aqi(city, loc)
 
+
 def load_demo_aqi(city: str, loc: Dict[str, Any]) -> Dict[str, Any]:
     norm = city.lower()
     file_to_load = "delhi_aqi.json" if "guntur" not in norm else "guntur_aqi.json"
     demo_file = settings.demo_data_path / file_to_load
-    
+
     if demo_file.exists():
         with open(demo_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -361,7 +355,7 @@ def load_demo_aqi(city: str, loc: Dict[str, Any]) -> Dict[str, Any]:
             data["location"]["lon"] = loc["lon"]
             data["fetched_at"] = datetime.now(timezone.utc).isoformat()
             return data
-            
+
     # Synthetic default
     return {
         "location": loc,
@@ -375,20 +369,14 @@ def load_demo_aqi(city: str, loc: Dict[str, Any]) -> Dict[str, Any]:
             "no2": 42.0,
             "so2": 15.0,
             "co": 1.6,
-            "o3": 30.0
+            "o3": 30.0,
         },
-        "weather": {
-            "temp_c": 16.0,
-            "humidity": 65,
-            "wind_kmh": 6.0,
-            "wind_direction": "NW",
-            "conditions": "Hazy"
-        },
+        "weather": {"temp_c": 16.0, "humidity": 65, "wind_kmh": 6.0, "wind_direction": "NW", "conditions": "Hazy"},
         "forecast": [
             {"hour": "08:00", "aqi": 320, "pm2_5": 200.0},
             {"hour": "12:00", "aqi": 250, "pm2_5": 155.0},
             {"hour": "15:00", "aqi": 220, "pm2_5": 135.0},
-            {"hour": "18:00", "aqi": 290, "pm2_5": 180.0}
+            {"hour": "18:00", "aqi": 290, "pm2_5": 180.0},
         ],
         "safe_windows": [
             {
@@ -396,10 +384,10 @@ def load_demo_aqi(city: str, loc: Dict[str, Any]) -> Dict[str, Any]:
                 "end": "16:00",
                 "avg_aqi": 225,
                 "category": "Poor",
-                "guidance": "Afternoon thermal mixing allows lowest particulate exposure."
+                "guidance": "Afternoon thermal mixing allows lowest particulate exposure.",
             }
         ],
         "source": "demo_fallback",
         "fetched_at": datetime.now(timezone.utc).isoformat(),
-        "is_stale": False
+        "is_stale": False,
     }
