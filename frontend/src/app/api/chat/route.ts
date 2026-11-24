@@ -24,10 +24,13 @@ export async function POST(req: NextRequest) {
     if (apiKey && apiKey !== 'demo') {
       try {
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
             body: JSON.stringify({
               contents: [
                 {
@@ -42,7 +45,7 @@ Household context: ${JSON.stringify(household || {})}
 User question: ${message}
 
 Provide actionable, practical, low-emission advice. Cite sources (indoor_air_quality, exercise_and_aqi, vulnerable_groups).
-Include Why, Alternatives, and Estimated Impact. Include a non-medical disclaimer.`
+Include Why, Alternatives, and Estimated Impact. Use only supplied environmental numbers; never fabricate statistical figures. Include a non-medical disclaimer.`
                     }
                   ]
                 }

@@ -119,7 +119,7 @@ Household: {json.dumps(household.model_dump() if household else {})}
 Relevant Knowledge: {json.dumps([c['content'] for c in rag_context])}
 
 Explain the 'Why', provide safe window timing, and highlight quantified before-vs-after exposure/emission impact.
-Never diagnose illness. Include medical safety caution if high AQI or asthma.
+Never diagnose illness. Include medical safety caution if high AQI or asthma. Use only supplied environmental numbers; never invent unverified numeric metrics or emission statistics.
 """
         try:
             payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.4}}
