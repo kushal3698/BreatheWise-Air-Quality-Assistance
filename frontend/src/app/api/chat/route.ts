@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     // Optional: If GEMINI_API_KEY is configured in Vercel environment variables, we can call Gemini
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+    const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
     if (apiKey && apiKey !== 'demo') {
       try {
         const geminiRes = await fetch(

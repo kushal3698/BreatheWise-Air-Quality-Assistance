@@ -361,10 +361,9 @@ The frontend is optimized for zero-configuration deployment to **Vercel**:
     ]
   },
   "today_timeline": [
-    { "time": "06:00 - 09:30", "advice": "Severe morning peak. Ground inversion traps traffic exhaust; keep all exercise indoors." },
+    { "time": "06:00 - 09:30", "advice": "Very Poor morning peak. Ground inversion traps traffic exhaust; keep all exercise indoors." },
     { "time": "13:30 – 16:30", "advice": "Optimal safe window today. Afternoon solar convection disperses surface pollutants." }
   ],
-  // Units note: Action items show immediate single-event savings (₹110/commute, ₹50/errand), scaled to monthly totals in impact_summary
   "impact_summary": {
     "exposure_reduction_pct": 42.0,
     "co2_avoided_kg_week": 8.5,
@@ -379,6 +378,8 @@ The frontend is optimized for zero-configuration deployment to **Vercel**:
 }
 ```
 
+> **Units Note:** Action items reflect immediate single-event savings (₹110/commute, ₹50/errand), scaled to monthly totals in the overall impact summary.
+
 ---
 
 ## ⚙️ Environment Variables & Config
@@ -391,7 +392,7 @@ All environment variables have sensible defaults and fallback to complete offlin
 | `DEFAULT_CITY` | `Delhi` | Fallback city on initial launch. |
 | `LLM_PROVIDER` | `gemini` | `gemini` or `demo` (rule-based fallback). If the model call fails, the assistant falls back to the rule-based provider. |
 | `GEMINI_API_KEY` | `""` | Optional Google AI Studio API key for conversational chat. |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Configurable via `GEMINI_MODEL` (e.g. `gemini-2.0-flash`, `gemini-1.5-flash`). |
+| `GEMINI_MODEL` | `gemini-3.5-flash` | Configurable via `GEMINI_MODEL` (e.g. `gemini-3.5-flash`). |
 | `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Whitelisted cross-origin request sources. |
 | `RATE_LIMIT_RPM` | `120` | Maximum requests permitted per minute per client IP. |
 
