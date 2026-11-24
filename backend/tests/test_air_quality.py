@@ -17,14 +17,14 @@ def test_cpcb_aqi_calculation():
     aqi_severe = calculate_cpcb_aqi(pm2_5=280.0, pm10=480.0)
     assert aqi_severe >= 401
 
-    # Exact CPCB breakpoint check: PM2.5=60.1 gives 100 after integer rounding, PM10=118.3 gives 113
+    # Exact CPCB breakpoint check: PM2.5=60.1 gives 100 after integer rounding, PM10=118.3 gives 112
     sub_pm25 = calculate_sub_index(60.1, CPCB_BREAKPOINTS["pm2_5"])
     sub_pm10 = calculate_sub_index(118.3, CPCB_BREAKPOINTS["pm10"])
     assert sub_pm25 == 100
-    assert sub_pm10 == 113
+    assert sub_pm10 == 112
 
     aqi_official = calculate_cpcb_aqi(pm2_5=60.1, pm10=118.3)
-    assert aqi_official == 113
+    assert aqi_official == 112
 
     # Delhi benchmark: PM2.5=178.4 (sub-index 345), PM10=288.0 (sub-index 238), NO2=45.2 (sub-index 56)
     aqi_delhi = calculate_cpcb_aqi(pm2_5=178.4, pm10=288.0, no2=45.2)

@@ -15,12 +15,12 @@ describe('BreatheWise Application Core Logic', () => {
     });
   });
 
-  it('calculates official CPCB AQI correctly with integer rounding (PM2.5 60.1 -> 100, PM10 118.3 -> 113)', () => {
-    // PM2.5 = 60.1 -> sub-index 100 after integer rounding, PM10 = 118.3 -> 113
+  it('calculates official CPCB AQI correctly with integer rounding (PM2.5 60.1 -> 100, PM10 118.3 -> 112)', () => {
+    // PM2.5 = 60.1 -> sub-index 100 after integer rounding, PM10 = 118.3 -> 112
     const res = calculateCPCB_AQI(60.1, 118.3);
     expect(res.subIndices.pm2_5).toBe(100);
-    expect(res.subIndices.pm10).toBe(113);
-    expect(res.aqi).toBe(113);
+    expect(res.subIndices.pm10).toBe(112);
+    expect(res.aqi).toBe(112);
     expect(res.category).toBe('Moderate');
 
     // Multi-pollutant check: max of all supplied pollutants

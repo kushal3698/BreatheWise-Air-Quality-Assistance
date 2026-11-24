@@ -27,7 +27,7 @@ export const CPCB_BREAKPOINTS: Record<string, Array<{ c_low: number; c_high: num
   pm10: [
     { c_low: 0, c_high: 50, i_low: 0, i_high: 50 },
     { c_low: 51, c_high: 100, i_low: 51, i_high: 100 },
-    { c_low: 100.1, c_high: 250, i_low: 101, i_high: 200 },
+    { c_low: 101, c_high: 250, i_low: 101, i_high: 200 },
     { c_low: 251, c_high: 350, i_low: 201, i_high: 300 },
     { c_low: 351, c_high: 430, i_low: 301, i_high: 400 },
     { c_low: 430.1, c_high: 600, i_low: 401, i_high: 500 },

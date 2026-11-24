@@ -27,6 +27,7 @@
 - [🎯 Challenge 6 Requirement Traceability Matrix](#-challenge-6-requirement-traceability-matrix)
 - [🌍 Overview & Problem Statement](#-overview--problem-statement)
 - [❄️ Winter Smog Playbook](#️-winter-smog-playbook)
+- [📸 Application Screenshots](#-application-screenshots)
 - [✨ Key Features](#-key-features)
 - [🏗️ System Architecture](#️-system-architecture)
 - [📁 Repository Structure](#-repository-structure)
@@ -51,7 +52,7 @@ Each clause of the official Challenge 6 brief is mapped to the code that impleme
 | Challenge 6 Requirement | Implementation Module | Source File(s) | Verification & Evidence |
 |:---|:---|:---|:---|
 | **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. Live demo is rule-based; Gemini is used when a key is set. |
-| **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD, allergies). Automatically triggers high-priority caution banners when AQI is elevated. |
+| **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD, allergies). Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse). |
 | **Helps Communities Navigate Smog** | School Guidance Protocols & Neighborhood Community Challenges with real-time feedback | `frontend/src/components/SchoolView.tsx`<br>`frontend/src/components/CommunityView.tsx`<br>`backend/app/routers/school.py`<br>`backend/app/routers/community.py` | Operational protocols for morning assembly, sports PE, and recess ventilation. Neighborhood leaderboards with car-free challenges and cumulative community CO₂ counters. |
 | **Suggests Low-Emission Daily Routines** | Dynamic Daily Action Planner with diurnal curve synchronization | `frontend/src/components/PlanCard.tsx`<br>`backend/app/routers/plan.py`<br>`backend/app/services/air_quality.py` | Recommends optimal exercise windows (shifting from morning inversion to afternoon thermal mixing), work-from-home coordination, and trip consolidation. |
 | **Indoor Air Quality Hacks** | Actionable, zero-cost and low-cost indoor mitigation techniques | `frontend/src/components/PlanCard.tsx`<br>`backend/app/knowledge_base/indoor_air_quality.md` | Wet mopping over sweeping, DIY Corsi-Rosenthal filtration boxes, window sealing during smog peaks, timed ventilation during afternoon dips, and kitchen exhaust protocols. |
@@ -92,6 +93,15 @@ The brief asks for help during **severe winter smog**. BreatheWise treats winter
 
 ### Honest note on the forecast
 The 24-hour curve is a **modelled diurnal shape** anchored to the current estimate, not a measured hourly station feed. See [Data Sources & Limitations](#-data-sources--limitations).
+
+---
+
+## 📸 Application Screenshots
+
+| Live Air Dashboard (CPCB NAQI 345 Very Poor) | Dynamic Daily Action Plan (Tailored Mitigations) |
+|:---:|:---:|
+| ![Live Air Dashboard](docs/assets/dashboard.png) | ![Daily Action Plan](docs/assets/plan.png) |
+| *Real-time CPCB NAQI calculation with dominant pollutant PM2.5 (345), WHO exceedance benchmarks, and meteorological telemetry.* | *Personalized winter smog mitigation plan with diurnal safe window, asthma alerts, structured action cards, and quantified impact.* |
 
 ---
 
@@ -429,8 +439,8 @@ $$I_p = I_{\text{lo}} + \frac{I_{\text{hi}} - I_{\text{lo}}}{B_{\text{hi}} - B_{
 ### 2. CPCB Integer Rounding Protocol
 Under official Indian Central Pollution Control Board reporting conventions, ambient sensor concentrations are evaluated against integer breakpoint bands:
 - An observed $\text{PM}_{2.5}$ of $60.1\ \mu\text{g/m}^3$ rounds to $60\ \mu\text{g/m}^3$, which sits at the upper limit of the Satisfactory band ($31\text{–}60$), yielding an exact sub-index of **100**.
-- An observed $\text{PM}_{10}$ of $118.3\ \mu\text{g/m}^3$ in the Moderate band ($101\text{–}250 \rightarrow 101\text{–}200$) yields a sub-index of **113**.
-- The composite AQI is $\max(100, 113) = \mathbf{113\ (\text{Moderate})}$, with **Dominant Pollutant: $\text{PM}_{10}$**.
+- An observed $\text{PM}_{10}$ of $118.3\ \mu\text{g/m}^3$ rounds to $118$ and falls in the Moderate bin $[101, 250] \rightarrow [101, 200]$, yielding a sub-index of **112**.
+- The composite AQI is $\max(100, 112) = \mathbf{112\ (\text{Moderate})}$, with **Dominant Pollutant: $\text{PM}_{10}$**.
 
 ---
 
@@ -479,7 +489,7 @@ BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURIT
 ## 🛡️ Responsible AI & Medical Safeguards
 
 1. **Non-Medical Disclaimer**: BreatheWise is a decision-support and awareness platform, not a medical diagnosis device. Disclaimers are prominently displayed.
-2. **Asthma & Vulnerability Triggers**: Immediate alerts whenever sensitive members are present (inhaler caution always displayed) or AQI enters unhealthy categories.
+2. **Asthma & Vulnerability Triggers**: Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse).
 3. **Deterministic Math**: Impact figures are computed mathematically rather than generated by LLMs to eliminate numerical hallucinations.
 
 ---

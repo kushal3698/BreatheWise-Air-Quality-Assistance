@@ -22,7 +22,7 @@ CPCB_BREAKPOINTS = {
     "pm10": [
         {"c_low": 0, "c_high": 50, "i_low": 0, "i_high": 50},
         {"c_low": 51, "c_high": 100, "i_low": 51, "i_high": 100},
-        {"c_low": 100.1, "c_high": 250, "i_low": 101, "i_high": 200},
+        {"c_low": 101, "c_high": 250, "i_low": 101, "i_high": 200},
         {"c_low": 251, "c_high": 350, "i_low": 201, "i_high": 300},
         {"c_low": 351, "c_high": 430, "i_low": 301, "i_high": 400},
         {"c_low": 430.1, "c_high": 600, "i_low": 401, "i_high": 500},
@@ -72,7 +72,7 @@ def calculate_sub_index(conc: float, breakpoints: List[Dict[str, float]], round_
         conc: Ambient pollutant concentration in µg/m³ (or mg/m³ for CO).
         breakpoints: Ordered list of CPCB breakpoint dictionaries with c_low, c_high, i_low, i_high.
         round_conc: If True, evaluates concentration after integer rounding per CPCB protocol
-                    (e.g., PM2.5 60.1 -> 60 yields sub-index 100, PM10 118.3 -> 118 yields 113).
+                    (e.g., PM2.5 60.1 -> 60 yields sub-index 100, PM10 118.3 -> 118 yields 112).
     Returns:
         Calculated integer sub-index clamped between 0 and 500.
     """
