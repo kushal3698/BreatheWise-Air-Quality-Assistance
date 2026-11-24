@@ -7,13 +7,18 @@ from app.config import settings
 
 
 class RAGDocumentChunk:
-    def __init__(self, source: str, title: str, content: str):
+    """
+    Represents an indexed section of a curated environmental health guide.
+    """
+
+    def __init__(self, source: str, title: str, content: str) -> None:
         self.source = source
         self.title = title
         self.content = content
         self.tokens = self._tokenize(f"{title} {content}")
 
     def _tokenize(self, text: str) -> List[str]:
+        """Tokenizes text into normalized lowercase word stems while discarding standard English stopwords."""
         words = re.findall(r"\b[a-zA-Z0-9_-]{3,}\b", text.lower())
         stopwords = {
             "the",
@@ -48,12 +53,17 @@ class RAGDocumentChunk:
 
 
 class KnowledgeBaseRetriever:
-    def __init__(self, kb_path: Path):
+    """
+    Lightweight, deterministic BM25/TF-IDF document retriever for environmental health guides.
+    """
+
+    def __init__(self, kb_path: Path) -> None:
         self.kb_path = kb_path
         self.chunks: List[RAGDocumentChunk] = []
         self._load_knowledge_base()
 
-    def _load_knowledge_base(self):
+    def _load_knowledge_base(self) -> None:
+        """Loads and parses markdown knowledge base files into section chunks."""
         self.chunks.clear()
         if not self.kb_path.exists():
             return

@@ -8,6 +8,7 @@ export interface Translations {
     planner: string;
     assistant: string;
     impact: string;
+    community: string;
     school: string;
   };
   aqiLabels: {
@@ -51,7 +52,8 @@ export const I18N_DATA: Record<SupportedLanguage, Translations> = {
       dashboard: "Air Dashboard",
       planner: "Daily Action Plan",
       assistant: "GenAI Assistant",
-      impact: "Impact & Community",
+      impact: "Personal Impact",
+      community: "Community Challenges",
       school: "School Guidance",
     },
     aqiLabels: {
@@ -93,7 +95,8 @@ export const I18N_DATA: Record<SupportedLanguage, Translations> = {
       dashboard: "वायु डैशबोर्ड",
       planner: "दैनिक कार्य योजना",
       assistant: "एआई सहायक",
-      impact: "प्रभाव एवं समुदाय",
+      impact: "व्यक्तिगत प्रभाव",
+      community: "सामुदायिक पहल",
       school: "स्कूल दिशानिर्देश",
     },
     aqiLabels: {
@@ -135,7 +138,8 @@ export const I18N_DATA: Record<SupportedLanguage, Translations> = {
       dashboard: "గాలి డాష్‌బోర్డ్",
       planner: "రోజువారీ కార్యాచరణ ప్రణాళిక",
       assistant: "AI అసిస్టెంట్",
-      impact: "ప్రభావం & కమ్యూనిటీ",
+      impact: "వ్యక్తిగత ప్రభావం",
+      community: "కమ్యూనిటీ కార్యక్రమాలు",
       school: "పాఠశాల మార్గదర్శకాలు",
     },
     aqiLabels: {
@@ -177,7 +181,8 @@ export const I18N_DATA: Record<SupportedLanguage, Translations> = {
       dashboard: "காற்று டாஷ்போர்டு",
       planner: "தினசரி செயல் திட்டம்",
       assistant: "AI உதவியாளர்",
-      impact: "தாக்கம் & சமூகம்",
+      impact: "தனிப்பட்ட தாக்கம்",
+      community: "சமூக சவால்கள்",
       school: "பள்ளி வழிகாட்டுதல்",
     },
     aqiLabels: {

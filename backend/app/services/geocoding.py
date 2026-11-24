@@ -66,6 +66,14 @@ KNOWN_LOCATIONS: Dict[str, Dict[str, Any]] = {
 
 
 async def geocode_city(city_query: str) -> Dict[str, Any]:
+    """
+    Resolves an Indian city name to its verified geographical coordinates (latitude and longitude).
+
+    First checks a high-speed local dictionary of 30+ pre-calibrated major and tier-2 Indian cities
+    with alias normalization (e.g., Bangalore -> Bengaluru, Vizag -> Visakhapatnam).
+    If unmapped, queries Open-Meteo's geocoding API with a strict 2-second timeout before falling
+    back gracefully to calibrated reference coordinates.
+    """
     normalized = city_query.strip().lower()
     if normalized in KNOWN_LOCATIONS:
         return KNOWN_LOCATIONS[normalized]

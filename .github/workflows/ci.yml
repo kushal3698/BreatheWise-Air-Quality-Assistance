@@ -63,7 +63,7 @@ jobs:
           black --check .
 
       - name: Run Pytest Test Suite with Coverage
-        run: pytest -v --cov=app --cov-fail-under=65 tests/
+        run: pytest -v --cov=app --cov-fail-under=70 tests/
 
   security-audit:
     name: Security Headers & Secret Scanning

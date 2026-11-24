@@ -50,7 +50,10 @@ async def rate_limiting_middleware(request: Request, call_next):
 
     history.append(now)
     _REQUEST_HISTORY[client_ip] = history
-    return await call_next(request)
+    response = await call_next(request)
+    response.headers["X-RateLimit-Limit"] = str(settings.rate_limit_requests_per_minute)
+    response.headers["X-RateLimit-Remaining"] = str(max(0, settings.rate_limit_requests_per_minute - len(history)))
+    return response
 
 
 # Security Headers Middleware
@@ -65,6 +68,8 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
     return response
 
 

@@ -7,7 +7,19 @@ router = APIRouter(prefix="/api/school", tags=["School Guidance"])
 
 
 @router.get("/guidance", response_model=SchoolGuidanceResponse)
-async def get_school_guidance(city: str = Query("Delhi")):
+async def get_school_guidance(
+    city: str = Query("Delhi", max_length=60, description="Indian city name for school advisory protocols")
+) -> SchoolGuidanceResponse:
+    """
+    Retrieves operational environmental health protocols for primary and secondary schools.
+
+    Provides actionable tier-based guidelines for:
+      - Morning assemblies (cancellation thresholds, indoor broadcasting)
+      - Physical education and outdoor sports restrictions
+      - Playground recess policies
+      - Classroom ventilation and filtration requirements
+      - Asthmatic and vulnerable student safeguards
+    """
     aqi_data = await fetch_air_quality(city)
     curr = aqi_data.get("current", {})
     aqi = curr.get("aqi", 250)

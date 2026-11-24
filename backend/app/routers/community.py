@@ -61,10 +61,18 @@ DEMO_LEADERBOARD: List[CommunityLeaderboardEntry] = [
 
 
 @router.get("/challenges", response_model=List[CommunityChallenge])
-async def get_community_challenges():
+async def get_community_challenges() -> List[CommunityChallenge]:
+    """
+    Returns active neighborhood challenges for collective emission reductions.
+
+    Includes Car-Free Fridays, Filter Box Drives, and Zero Open-Burning Vigilance.
+    """
     return DEMO_CHALLENGES
 
 
 @router.get("/leaderboard", response_model=List[CommunityLeaderboardEntry])
-async def get_community_leaderboard():
+async def get_community_leaderboard() -> List[CommunityLeaderboardEntry]:
+    """
+    Returns civic neighborhood leaderboards tracking cumulative CO2 avoided and car-free trips.
+    """
     return DEMO_LEADERBOARD

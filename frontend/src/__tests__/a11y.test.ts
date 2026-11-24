@@ -38,11 +38,14 @@ describe('Accessibility (a11y) & WCAG 2.1 AA Compliance', () => {
   });
 
   it('validates ARIA tablist and tab role specifications', () => {
-    const tabKeys = ['dashboard', 'planner', 'chat', 'impact', 'school'];
+    const tabKeys = ['dashboard', 'planner', 'chat', 'impact', 'community', 'school'];
     tabKeys.forEach((key) => {
       expect(typeof key).toBe('string');
       expect(key.length).toBeGreaterThan(0);
+      expect(`tab-${key}`).toMatch(/^tab-[a-z]+$/);
+      expect(`panel-${key}`).toMatch(/^panel-[a-z]+$/);
     });
+    expect(tabKeys.length).toBe(6);
   });
 
   it('ensures translations provide meaningful accessible labels across all 4 supported languages with valid lang codes', () => {

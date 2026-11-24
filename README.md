@@ -213,7 +213,7 @@ BreatheWise-Air-Quality-Assistance/
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
 │   ├── pyproject.toml               # Ruff & Black configuration
-│   ├── tests/                       # Pytest test suite (29 tests, including test_guardrails.py)
+│   ├── tests/                       # Pytest test suite (47 tests across all routers, services & guardrails)
 │   └── requirements.txt             # Python dependencies
 ├── frontend/
 │   ├── src/
@@ -238,7 +238,7 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── api.ts               # Resilient client API functions
 │   │   │   ├── initialData.ts       # 30+ city presets & CPCB NAQI calculations
 │   │   │   └── i18n.ts              # English, Hindi, Telugu, Tamil translations
-│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n (24 tests)
+│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n, routes (30 tests)
 │   ├── next.config.js               # Strict HTTP security headers (HSTS, CSP, X-Frame)
 │   ├── package.json                 # Next.js 14 & dependencies
 │   └── tailwind.config.js           # Tailwind CSS configuration
@@ -450,14 +450,14 @@ Under official Indian Central Pollution Control Board reporting conventions, amb
 
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **53 automated tests** (29 backend, 24 frontend) integrated into GitHub Actions. Backend line coverage is about 72% (pytest-cov), with CI enforcing a 65% minimum, plus ruff, black and ESLint checks:
+BreatheWise maintains **77 automated tests** (47 backend, 30 frontend) integrated into GitHub Actions. Backend line coverage is about 82% (pytest-cov), with CI enforcing a 70% minimum, plus ruff, black and ESLint checks:
 
 ```bash
-# Frontend Tests (Vitest — 24 passed)
+# Frontend Tests (Vitest — 30 passed)
 cd frontend
 npm test -- --run
 
-# Backend Tests (Pytest with Coverage — 29 passed)
+# Backend Tests (Pytest with Coverage — 47 passed)
 python -m pytest backend/tests -v
 ```
 

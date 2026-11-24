@@ -104,7 +104,7 @@ export default function HomePage() {
   const [cityInput, setCityInput] = useState('');
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [language, setLanguage] = useState<SupportedLanguage>('en');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'planner' | 'chat' | 'impact' | 'school'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'planner' | 'chat' | 'impact' | 'community' | 'school'>('dashboard');
 
   const [aqiData, setAqiData] = useState<AirQualityData>(DEFAULT_AQI_DATA);
   const [planData, setPlanData] = useState<DailyPlan>(DEFAULT_PLAN_DATA);
@@ -284,6 +284,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 sm:gap-2 overflow-x-auto py-2 text-xs font-bold text-slate-600">
           <button
             role="tab"
+            id="tab-dashboard"
+            aria-controls="panel-dashboard"
             aria-selected={activeTab === 'dashboard'}
             onClick={() => setActiveTab('dashboard')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -298,6 +300,8 @@ export default function HomePage() {
 
           <button
             role="tab"
+            id="tab-planner"
+            aria-controls="panel-planner"
             aria-selected={activeTab === 'planner'}
             onClick={() => setActiveTab('planner')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -312,6 +316,8 @@ export default function HomePage() {
 
           <button
             role="tab"
+            id="tab-chat"
+            aria-controls="panel-chat"
             aria-selected={activeTab === 'chat'}
             onClick={() => setActiveTab('chat')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -326,6 +332,8 @@ export default function HomePage() {
 
           <button
             role="tab"
+            id="tab-impact"
+            aria-controls="panel-impact"
             aria-selected={activeTab === 'impact'}
             onClick={() => setActiveTab('impact')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -340,6 +348,24 @@ export default function HomePage() {
 
           <button
             role="tab"
+            id="tab-community"
+            aria-controls="panel-community"
+            aria-selected={activeTab === 'community'}
+            onClick={() => setActiveTab('community')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'community'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>{t.nav.community}</span>
+          </button>
+
+          <button
+            role="tab"
+            id="tab-school"
+            aria-controls="panel-school"
             aria-selected={activeTab === 'school'}
             onClick={() => setActiveTab('school')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -467,7 +493,7 @@ export default function HomePage() {
 
         {/* TAB 1: AIR DASHBOARD */}
         {activeTab === 'dashboard' && (
-          <div key={city} className="space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+          <div role="tabpanel" id="panel-dashboard" aria-labelledby="tab-dashboard" key={city} className="space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             <RiskMeter 
               data={aqiData} 
               isLive={isLiveConnected && aqiData.source === 'live_cpcb_station'} 
@@ -509,7 +535,7 @@ export default function HomePage() {
 
         {/* TAB 2: DAILY PLANNER */}
         {activeTab === 'planner' && (
-          <div key={city} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+          <div role="tabpanel" id="panel-planner" aria-labelledby="tab-planner" key={city} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             {/* Household Config Drawer (Left 4 cols) */}
             <div className="lg:col-span-4 space-y-4">
               <HouseholdSelector
@@ -545,28 +571,34 @@ export default function HomePage() {
 
         {/* TAB 3: GENAI ASSISTANT */}
         {activeTab === 'chat' && (
-          <div key={city} className="max-w-4xl mx-auto transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+          <div role="tabpanel" id="panel-chat" aria-labelledby="tab-chat" key={city} className="max-w-4xl mx-auto transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             <ChatAssistant city={city} language={language} household={household} />
           </div>
         )}
 
-        {/* TAB 4: IMPACT & COMMUNITY */}
+        {/* TAB 4: PERSONAL IMPACT */}
         {activeTab === 'impact' && (
-          <div className="space-y-6">
+          <div role="tabpanel" id="panel-impact" aria-labelledby="tab-impact" className="space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             <ImpactBar
               exposureReductionPct={planData ? planData.impact_summary.exposure_reduction_pct : 42}
               co2AvoidedKgWeek={planData ? planData.impact_summary.co2_avoided_kg_week : 8.5}
               costSavedInrMonth={planData ? planData.impact_summary.cost_saved_inr_month : 1850}
-              cigarettesAvoidedDay={planData ? planData.impact_summary.cigarettes_avoided_day : 2.4}
+              cigarettesAvoidedDay={planData ? planData.impact_summary.cigarettes_avoided_day : 3.4}
               confidence={planData ? planData.impact_summary.confidence : "Modelled estimate"}
             />
+          </div>
+        )}
+
+        {/* TAB 5: COMMUNITY CHALLENGES & LEADERBOARDS */}
+        {activeTab === 'community' && (
+          <div role="tabpanel" id="panel-community" aria-labelledby="tab-community" key={city} className="space-y-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             <CommunityView city={city} />
           </div>
         )}
 
-        {/* TAB 5: SCHOOL GUIDANCE */}
+        {/* TAB 6: SCHOOL GUIDANCE */}
         {activeTab === 'school' && (
-          <div key={city} className="max-w-4xl mx-auto transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+          <div role="tabpanel" id="panel-school" aria-labelledby="tab-school" key={city} className="max-w-4xl mx-auto transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
             <SchoolView city={city} />
           </div>
         )}
