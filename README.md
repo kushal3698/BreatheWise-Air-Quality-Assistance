@@ -8,7 +8,7 @@
 
 [![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Tests-53%20Passed-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-77%20Passed-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 

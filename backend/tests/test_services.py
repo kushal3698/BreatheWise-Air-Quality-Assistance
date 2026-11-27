@@ -1,14 +1,13 @@
 import pytest
-from pathlib import Path
 
 from app.config import settings
-from app.services.geocoding import geocode_city, KNOWN_LOCATIONS
-from app.services.rag import KnowledgeBaseRetriever, RAGDocumentChunk
-from app.services.llm.factory import get_llm_provider
+from app.models.schemas import HomeProfile, HouseholdMember, HouseholdProfile, TransportProfile
+from app.services.geocoding import geocode_city
 from app.services.llm.demo_llm import DemoLLMProvider
+from app.services.llm.factory import get_llm_provider
 from app.services.llm.gemini import GeminiLLMProvider
 from app.services.llm.openai_compat import OpenAICompatLLMProvider
-from app.models.schemas import HouseholdProfile, HouseholdMember, TransportProfile, HomeProfile
+from app.services.rag import KnowledgeBaseRetriever, RAGDocumentChunk
 
 
 @pytest.mark.anyio

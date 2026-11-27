@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-import pytest
 
 from app.main import app
 from app.models.schemas import HouseholdMember, HouseholdProfile
@@ -158,9 +157,7 @@ def test_chat_endpoint(monkeypatch):
         "message": "Can my child play outside at 4 PM in Delhi?",
         "city": "Delhi",
         "language": "en",
-        "household": HouseholdProfile(
-            members=[HouseholdMember(role="child", age=8, sensitivities=[])]
-        ).model_dump(),
+        "household": HouseholdProfile(members=[HouseholdMember(role="child", age=8, sensitivities=[])]).model_dump(),
         "history": [{"role": "user", "content": "Hello"}],
     }
     response = client.post("/api/chat", json=body)
