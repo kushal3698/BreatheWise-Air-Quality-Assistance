@@ -29,6 +29,79 @@ def calculate_purifier_exposure_delta(has_purifier: bool) -> float:
     return 8.0 if has_purifier else 12.0
 
 
+def _impact_exercise(outdoor_pm25: float) -> Dict[str, Any]:
+    """Computes exposure reduction from shifting morning cardio indoors."""
+    exp_reduc = 65.0 if outdoor_pm25 > 150 else 40.0
+    return {
+        "exposure_reduction_pct": exp_reduc,
+        "co2_saved_kg": 0.0,
+        "cost_saved_inr": 0.0,
+        "confidence": "Modelled estimate",
+    }
+
+
+def _impact_commute(household: Optional[HouseholdProfile]) -> Dict[str, Any]:
+    """Computes CO2 and fuel cost savings from modal commute shift."""
+    commute_km = household.transport.commute_km if household else 15.0
+    ef_car = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("petrol_car", 0.170)
+    ef_metro = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("metro", 0.014)
+    cost_car = EMISSION_CONFIG.get("cost_inr_per_km", {}).get("petrol_car", 9.5)
+    cost_metro = EMISSION_CONFIG.get("cost_inr_per_km", {}).get("metro", 2.2)
+
+    co2_saved = round(commute_km * (ef_car - ef_metro), 2)
+    cost_saved = round(commute_km * (cost_car - cost_metro), 1)
+    return {
+        "exposure_reduction_pct": 35.0,
+        "co2_saved_kg": co2_saved,
+        "cost_saved_inr": cost_saved,
+        "confidence": "Modelled estimate",
+    }
+
+
+def _impact_school(household: Optional[HouseholdProfile]) -> Dict[str, Any]:
+    """Computes emissions and fuel savings from carpooling school runs."""
+    school_km = household.transport.school_run_km if household else 4.0
+    ef_car = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("petrol_car", 0.170)
+    ef_bus = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("bus", 0.022)
+    co2_saved = round(school_km * 2 * (ef_car - ef_bus), 2)
+    return {
+        "exposure_reduction_pct": 20.0,
+        "co2_saved_kg": co2_saved,
+        "cost_saved_inr": 45.0,
+        "confidence": "Modelled estimate",
+    }
+
+
+def _impact_purifier() -> Dict[str, Any]:
+    """Computes particulate reduction from active indoor HEPA/C-R filtration."""
+    return {
+        "exposure_reduction_pct": 75.0,
+        "co2_saved_kg": 0.0,
+        "cost_saved_inr": 0.0,
+        "confidence": "Modelled estimate",
+    }
+
+
+def _impact_cooking() -> Dict[str, Any]:
+    """Computes indoor emission abatement from exhaust ventilation and clean cooking."""
+    return {
+        "exposure_reduction_pct": 25.0,
+        "co2_saved_kg": 0.4,
+        "cost_saved_inr": 15.0,
+        "confidence": "Modelled estimate",
+    }
+
+
+def _impact_default() -> Dict[str, Any]:
+    """Fallback impact metrics for general advisory actions."""
+    return {
+        "exposure_reduction_pct": 15.0,
+        "co2_saved_kg": 0.5,
+        "cost_saved_inr": 20.0,
+        "confidence": "Modelled estimate",
+    }
+
+
 def calculate_action_impact(
     action_type: str, outdoor_pm25: float, household: Optional[HouseholdProfile] = None
 ) -> Dict[str, Any]:
@@ -44,69 +117,18 @@ def calculate_action_impact(
         Dictionary containing exposure reduction percentage, CO2 avoided (kg), cost saved (INR),
         and confidence rating ('Modelled estimate').
     """
-    action_type = action_type.lower()
-
-    if "exercise" in action_type or "jog" in action_type or "walk" in action_type:
-        # Move morning run indoors: exposure reduction based on indoor infiltration (0.20 vs 1.0)
-        exp_reduc = 65.0 if outdoor_pm25 > 150 else 40.0
-        return {
-            "exposure_reduction_pct": exp_reduc,
-            "co2_saved_kg": 0.0,
-            "cost_saved_inr": 0.0,
-            "confidence": "Modelled estimate",
-        }
-
-    elif "commute" in action_type or "metro" in action_type or "bus" in action_type:
-        commute_km = household.transport.commute_km if household else 15.0
-        ef_car = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("petrol_car", 0.170)
-        ef_metro = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("metro", 0.014)
-        cost_car = EMISSION_CONFIG.get("cost_inr_per_km", {}).get("petrol_car", 9.5)
-        cost_metro = EMISSION_CONFIG.get("cost_inr_per_km", {}).get("metro", 2.2)
-
-        co2_saved = round(commute_km * (ef_car - ef_metro), 2)
-        cost_saved = round(commute_km * (cost_car - cost_metro), 1)
-        return {
-            "exposure_reduction_pct": 35.0,
-            "co2_saved_kg": co2_saved,
-            "cost_saved_inr": cost_saved,
-            "confidence": "Modelled estimate",
-        }
-
-    elif "school" in action_type or "pool" in action_type:
-        school_km = household.transport.school_run_km if household else 4.0
-        ef_car = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("petrol_car", 0.170)
-        ef_bus = EMISSION_CONFIG.get("emission_factors_kg_co2_per_km", {}).get("bus", 0.022)
-        co2_saved = round(school_km * 2 * (ef_car - ef_bus), 2)
-        return {
-            "exposure_reduction_pct": 20.0,
-            "co2_saved_kg": co2_saved,
-            "cost_saved_inr": 45.0,
-            "confidence": "Modelled estimate",
-        }
-
-    elif "purifier" in action_type or "corsi" in action_type or "filter" in action_type:
-        # Purifier or DIY Corsi-Rosenthal box removes 70-85% of indoor PM2.5 in living space
-        return {
-            "exposure_reduction_pct": 75.0,
-            "co2_saved_kg": 0.0,
-            "cost_saved_inr": 0.0,
-            "confidence": "Modelled estimate",
-        }
-
-    elif "cooking" in action_type or "induction" in action_type:
-        return {
-            "exposure_reduction_pct": 25.0,
-            "co2_saved_kg": 0.4,
-            "cost_saved_inr": 15.0,
-            "confidence": "Modelled estimate",
-        }
-
-    return {
-        "exposure_reduction_pct": 15.0,
-        "co2_saved_kg": 0.5,
-        "cost_saved_inr": 20.0,
-        "confidence": "Modelled estimate",
-    }
+    at = action_type.lower()
+    if any(k in at for k in ("exercise", "jog", "walk")):
+        return _impact_exercise(outdoor_pm25)
+    if any(k in at for k in ("commute", "metro", "bus")):
+        return _impact_commute(household)
+    if any(k in at for k in ("school", "pool")):
+        return _impact_school(household)
+    if any(k in at for k in ("purifier", "corsi", "filter")):
+        return _impact_purifier()
+    if any(k in at for k in ("cooking", "induction")):
+        return _impact_cooking()
+    return _impact_default()
 
 
 def calculate_overall_impact(outdoor_pm25: float, household: Optional[HouseholdProfile] = None) -> ImpactSummary:

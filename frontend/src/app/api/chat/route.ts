@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateLocalChatReply } from '@/lib/chatEngine';
+import { sanitizeCity } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    let { message = '', city = 'Delhi', language = 'en', household } = body;
+    let { message = '', language = 'en', household } = body;
 
     // Security input sanitization
     if (typeof message !== 'string') message = '';
     message = message.trim().slice(0, 1000);
 
-    if (typeof city !== 'string') city = 'Delhi';
-    city = city.replace(/[^\p{L}\p{M}\p{N}\s()\-.]/gu, '').trim().slice(0, 60) || 'Delhi';
+    const city = sanitizeCity(body?.city);
 
     const validLangs = ['en', 'hi', 'te', 'ta'];
     if (!validLangs.includes(language)) language = 'en';

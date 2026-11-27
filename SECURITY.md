@@ -26,7 +26,7 @@ Both the **Next.js 14** web application and the **FastAPI** backend enforce stri
 - `X-Powered-By`: Suppressed across all responses to prevent technology fingerprinting.
 
 ### 2. Input Sanitization & Attack Surface Mitigation
-- **City Parameter Scrubbing**: Search parameters and city inputs are strictly sanitized with `/[^a-zA-Z0-9\s()\-]/g` and truncated to 60 characters, neutralizing SQL/NoSQL injections and path traversals.
+- **City Parameter Scrubbing**: Search parameters and city inputs are strictly sanitized with `/[^\p{L}\p{M}\p{N}\s()\-.]/gu` and truncated to 60 characters, neutralizing cross-site scripting (XSS), script injection, and path traversals.
 - **Payload Size & Type Enforcement**: Conversational chat payloads are capped at 1,000 characters with explicit type checking before LLM ingestion, preventing resource exhaustion (DoS) and prompt injection tampering.
 - **Language Whitelisting**: Language switches strictly validate against supported ISO codes (`en`, `hi`, `te`, `ta`) with safe fallback to `en`.
 
@@ -51,7 +51,7 @@ If you discover a potential security vulnerability within BreatheWise, please re
    - Step-by-step reproduction instructions or Proof-of-Concept (PoC)
    - Potential impact assessment
 3. **Response Timeline**:
-   - Initial acknowledgment within **24 hours**.
-   - Remediation and patch deployment within **72 hours**.
+   - Initial acknowledgment promptly, typically within **2 business days**.
+   - Remediation prioritized based on severity.
 
 Please do not disclose potential security issues publicly until a patch has been verified and released.

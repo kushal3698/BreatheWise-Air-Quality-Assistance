@@ -8,7 +8,7 @@
 
 [![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Tests-77%20Passed-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-115%20Passed-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 
@@ -190,7 +190,7 @@ flowchart TD
 BreatheWise-Air-Quality-Assistance/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                   # Automated GitHub Actions CI (Frontend & Backend)
+│       └── ci.yml                   # Automated GitHub Actions CI (Frontend, Backend & Secret Scanning)
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                  # FastAPI app with HTTP security headers & rate limiting
@@ -213,19 +213,20 @@ BreatheWise-Air-Quality-Assistance/
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
 │   ├── pyproject.toml               # Ruff & Black configuration
-│   ├── tests/                       # Pytest test suite (47 tests across all routers, services & guardrails)
+│   ├── tests/                       # Pytest suite (69 tests across routers, services, guardrails, and parity)
 │   └── requirements.txt             # Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── layout.tsx           # Root HTML layout with skip-to-content anchor
-│   │   │   ├── page.tsx             # Modular dashboard with ARIA tablist
+│   │   │   ├── page.tsx             # Modular dashboard with custom hooks & ARIA tablist
 │   │   │   ├── globals.css          # Tailwind directives
-│   │   │   └── api/                 # Next.js Serverless API routes (aqi, chat, plan, community)
+│   │   │   └── api/                 # Next.js Serverless API routes (aqi, chat, plan)
 │   │   ├── components/
 │   │   │   ├── Navbar.tsx           # Extracted sticky top navigation & instant search
 │   │   │   ├── Footer.tsx           # Extracted accessible disclaimer footer
-│   │   │   ├── RiskMeter.tsx        # 6-band CPCB gauge with synchronized marker & getAQIBand
+│   │   │   ├── RiskMeter.tsx        # Modular 6-band CPCB gauge
+│   │   │   ├── risk-meter/          # Decomposed sub-components (AQIBandScale, PollutantGrid)
 │   │   │   ├── SafeWindows.tsx      # Diurnal safe window cards with thermal mixing rationale
 │   │   │   ├── ForecastChart.tsx    # 24-hr CPCB AQI diurnal chart with 2h tick intervals
 │   │   │   ├── PlanCard.tsx         # 3-section daily action plan
@@ -234,21 +235,33 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── HouseholdSelector.tsx# Profile drawer & sensitivity chips
 │   │   │   ├── SchoolView.tsx       # Campus advisory protocol dashboard
 │   │   │   └── CommunityView.tsx    # Responsive neighborhood leaderboard & challenges
+│   │   ├── hooks/                   # Extracted state hooks (useAirQuality, useHousehold, usePlan)
 │   │   ├── lib/
+│   │   │   ├── cpcb.ts              # Mathematical CPCB NAQI calculation engine
+│   │   │   ├── cities.ts            # Indian city directory & metro classifications
+│   │   │   ├── presetPlan.ts        # Pre-calibrated plans for instant offline fallback
+│   │   │   ├── communityData.ts     # Neighborhood challenges and leaderboard state
+│   │   │   ├── sanitize.ts          # Unicode-safe input sanitization utility
+│   │   │   ├── logger.ts            # Environment-aware client logging utility
+│   │   │   ├── initialData.ts       # Backward-compatible barrel re-export
 │   │   │   ├── api.ts               # Resilient client API functions
-│   │   │   ├── initialData.ts       # 30+ city presets & CPCB NAQI calculations
 │   │   │   └── i18n.ts              # English, Hindi, Telugu, Tamil translations
-│   │   └── __tests__/               # Vitest suite: app, a11y, cpcbBreakpoints, i18n, routes (30 tests)
+│   │   └── __tests__/               # Vitest suite (46 tests: app, a11y, cpcbBreakpoints, cpcbParity, i18n, routes)
 │   ├── next.config.js               # Strict HTTP security headers (HSTS, CSP, X-Frame)
 │   ├── package.json                 # Next.js 14 & dependencies
 │   └── tailwind.config.js           # Tailwind CSS configuration
+├── tests/
+│   └── fixtures/
+│       └── cpcb_cases.json          # Shared golden dataset for cross-stack CPCB verification
+├── scripts/                         # Portable environment-independent utility scripts
 ├── docs/assets/
 │   ├── dashboard.png                # Desktop dashboard screenshot
 │   ├── plan.png                     # Daily action plan screenshot
 │   └── thumbnail.jpg                # 16:9 Presentation thumbnail
-├── run_all.bat                      # Unified Windows launcher
-├── run_backend.bat                  # Dedicated FastAPI backend launcher
-├── run_frontend.bat                 # Dedicated Next.js frontend launcher
+├── ARCHITECTURE.md                  # System architecture, cross-stack design, and decoupling
+├── run_all.bat                      # Unified Windows launcher shim
+├── run_backend.bat                  # Dedicated FastAPI backend launcher shim
+├── run_frontend.bat                 # Dedicated Next.js frontend launcher shim
 ├── .env.example                     # Environment template (zero committed secrets)
 ├── CONTRIBUTING.md                  # Code style, testing, and contribution guide
 ├── SECURITY.md                      # Formal security policy & threat model
@@ -450,14 +463,14 @@ Under official Indian Central Pollution Control Board reporting conventions, amb
 
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **77 automated tests** (47 backend, 30 frontend) integrated into GitHub Actions. Backend line coverage is about 82% (pytest-cov), with CI enforcing a 70% minimum, plus ruff, black and ESLint checks:
+BreatheWise maintains **115 automated tests** (69 backend, 46 frontend) integrated into GitHub Actions. Backend line coverage is over 85% (pytest-cov), with CI enforcing a 70% minimum, plus ruff, black and ESLint checks:
 
 ```bash
-# Frontend Tests (Vitest — 30 passed)
+# Frontend Tests (Vitest — 46 passed)
 cd frontend
 npm test -- --run
 
-# Backend Tests (Pytest with Coverage — 47 passed)
+# Backend Tests (Pytest with Coverage — 69 passed)
 python -m pytest backend/tests -v
 ```
 

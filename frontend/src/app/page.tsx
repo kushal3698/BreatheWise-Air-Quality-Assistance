@@ -1,38 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { 
-  Wind, 
-  MapPin, 
+  Activity, 
   Calendar, 
   Bot, 
-  Users, 
-  School, 
   TrendingDown, 
-  Globe, 
-  RotateCw, 
-  Check, 
-  Activity, 
-  ShieldCheck, 
+  Users, 
+  School,
   Sparkles,
+  MapPin,
   Search,
-  X
+  X,
+  Check
 } from 'lucide-react';
-import { 
-  fetchAQI, 
-  fetchDailyPlan, 
-  AirQualityData, 
-  DailyPlan, 
-  HouseholdProfile 
-} from '@/lib/api';
-import { 
-  DEFAULT_AQI_DATA, 
-  DEFAULT_PLAN_DATA,
-  getCityPresetAQI,
-  getCityPresetPlan,
-  ALL_SEARCHABLE_CITIES
-} from '@/lib/initialData';
-import { I18N_DATA, SupportedLanguage } from '@/lib/i18n';
+import dynamic from 'next/dynamic';
+
+import { SupportedLanguage, I18N_DATA } from '@/lib/i18n';
+import { ALL_SEARCHABLE_CITIES } from '@/lib/cities';
+import { getCityPresetPlan } from '@/lib/presetPlan';
 import { RiskMeter } from '@/components/RiskMeter';
 import { SafeWindows } from '@/components/SafeWindows';
 import { PlanCard } from '@/components/PlanCard';
@@ -43,7 +29,10 @@ import { SchoolView } from '@/components/SchoolView';
 import { CommunityView } from '@/components/CommunityView';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import dynamic from 'next/dynamic';
+
+import { useAirQuality } from '@/hooks/useAirQuality';
+import { useHousehold } from '@/hooks/useHousehold';
+import { usePlan } from '@/hooks/usePlan';
 
 const ForecastChart = dynamic(
   () => import('@/components/ForecastChart').then(mod => mod.ForecastChart),
@@ -59,18 +48,12 @@ const ForecastChart = dynamic(
 
 const POPULAR_CITIES = ['Delhi', 'Guntur', 'Bengaluru', 'Mumbai', 'Kolkata', 'Hyderabad'];
 
-interface CityToastInfo {
-  name: string;
-  aqi: number;
-  cat: string;
-  color: string;
-  safeWindow: string;
-}
-
-// Crisp audio & haptic feedback on city tap
+// Crisp audio & haptic feedback on city tap with strict typing
 function triggerClickFeel() {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
       const ctx = new AudioContextClass();
       if (ctx.state === 'suspended') {
@@ -88,7 +71,7 @@ function triggerClickFeel() {
       osc.start();
       osc.stop(ctx.currentTime + 0.05);
     }
-  } catch (e) {
+  } catch {
     // Silently continue if audio permissions are not yet granted
   }
 
@@ -96,46 +79,27 @@ function triggerClickFeel() {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([35, 10, 20]);
     }
-  } catch (e) {}
+  } catch {}
 }
 
 export default function HomePage() {
-  const [city, setCity] = useState('Delhi');
-  const [cityInput, setCityInput] = useState('');
-  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [language, setLanguage] = useState<SupportedLanguage>('en');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'planner' | 'chat' | 'impact' | 'community' | 'school'>('dashboard');
 
-  const [aqiData, setAqiData] = useState<AirQualityData>(DEFAULT_AQI_DATA);
-  const [planData, setPlanData] = useState<DailyPlan>(DEFAULT_PLAN_DATA);
-  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
-  const [loadingPlan, setLoadingPlan] = useState(false);
+  const { household, setHousehold } = useHousehold();
+  const {
+    city,
+    cityInput,
+    setCityInput,
+    searchDropdownOpen,
+    setSearchDropdownOpen,
+    aqiData,
+    isLiveConnected,
+    cityToast,
+    selectCity
+  } = useAirQuality('Delhi');
 
-  const [cityToast, setCityToast] = useState<CityToastInfo | null>(null);
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Default household profile
-  const [household, setHousehold] = useState<HouseholdProfile>({
-    members: [
-      { id: '1', role: 'child', age: 8, sensitivities: [] },
-      { id: '2', role: 'adult', age: 38, sensitivities: ['asthma'] },
-      { id: '3', role: 'adult', age: 40, sensitivities: [] },
-      { id: '4', role: 'elderly', age: 68, sensitivities: [] }
-    ],
-    transport: {
-      mode: 'petrol_car',
-      vehicles: 1,
-      school_run_km: 4.0,
-      commute_km: 15.0
-    },
-    home: {
-      type: 'apartment',
-      floor: 4,
-      has_purifier: false,
-      cooking_fuel: 'LPG'
-    },
-    work_from_home_days: 2
-  });
+  const { planData, setPlanData, loadingPlan, reloadPlan } = usePlan(city, language, household);
 
   const t = I18N_DATA[language];
 
@@ -147,91 +111,11 @@ export default function HomePage() {
       ).slice(0, 7)
     : [];
 
-  // Initial mount sync for live data. Intentionally runs once: later city, language and
-  // household changes are handled by explicit handlers (reloadPlanForProfile, city selection).
-  useEffect(() => {
-    fetchAQI(city)
-      .then(data => {
-        setAqiData(data);
-        setIsLiveConnected(true);
-      })
-      .catch(() => {
-        setIsLiveConnected(false);
-      });
-
-    fetchDailyPlan(city, language, household)
-      .then(plan => {
-        setPlanData(plan);
-        setIsLiveConnected(true);
-      })
-      .catch(() => {
-        setIsLiveConnected(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Update plan when language or household changes
-  const reloadPlanForProfile = async (targetCity: string, lang: SupportedLanguage, hh: HouseholdProfile) => {
-    setLoadingPlan(true);
-    try {
-      const plan = await fetchDailyPlan(targetCity, lang, hh);
-      setPlanData(plan);
-      setIsLiveConnected(true);
-    } catch (e) {
-      console.warn("Using structured fallback plan:", e);
-      setPlanData(getCityPresetPlan(targetCity, hh));
-    } finally {
-      setLoadingPlan(false);
-    }
-  };
-
-  // ⚡ Instant synchronous UI switch + tactile feedback
   const handleCitySelect = (c: string) => {
     triggerClickFeel();
-
-    setCity(c);
-    const presetAQI = getCityPresetAQI(c);
-    const presetPlan = getCityPresetPlan(c, household);
-
-    // Instant zero-millisecond update
-    setAqiData(presetAQI);
-    setPlanData(presetPlan);
-
-    // High-visibility animated toast banner
-    const firstSafe = presetAQI.safe_windows && presetAQI.safe_windows[0];
-    const safeWindowStr = firstSafe ? `${firstSafe.start} – ${firstSafe.end}` : '13:00 – 16:00';
-
-    setCityToast({
-      name: presetAQI.location.name,
-      aqi: presetAQI.current.aqi,
-      cat: presetAQI.current.category,
-      color: presetAQI.current.cpcb_color,
-      safeWindow: safeWindowStr
-    });
-
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => {
-      setCityToast(null);
-    }, 3200);
-
-    // Silent background live sync (does not block or freeze UI)
-    fetchAQI(c)
-      .then(liveAQI => {
-        setAqiData(liveAQI);
-        setIsLiveConnected(true);
-      })
-      .catch(() => {
-        setIsLiveConnected(false);
-      });
-
-    fetchDailyPlan(c, language, household)
-      .then(livePlan => {
-        setPlanData(livePlan);
-        setIsLiveConnected(true);
-      })
-      .catch(() => {
-        setIsLiveConnected(false);
-      });
+    selectCity(c);
+    setPlanData(getCityPresetPlan(c, household));
+    reloadPlan(c, language, household);
   };
 
   const selectSearchedCity = (cityName: string) => {
@@ -272,7 +156,7 @@ export default function HomePage() {
         language={language}
         setLanguage={(newLang) => {
           setLanguage(newLang);
-          reloadPlanForProfile(city, newLang, household);
+          reloadPlan(city, newLang, household);
         }}
         isLiveConnected={isLiveConnected}
         isLiveStation={aqiData.source === 'live_cpcb_station'}
@@ -542,11 +426,11 @@ export default function HomePage() {
                 profile={household}
                 onChange={(updated) => {
                   setHousehold(updated);
-                  reloadPlanForProfile(city, language, updated);
+                  reloadPlan(city, language, updated);
                 }}
               />
               <button
-                onClick={() => reloadPlanForProfile(city, language, household)}
+                onClick={() => reloadPlan(city, language, household)}
                 disabled={loadingPlan}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >

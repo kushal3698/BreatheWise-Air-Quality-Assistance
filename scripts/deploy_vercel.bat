@@ -1,10 +1,9 @@
 @echo off
 title Deploy BreatheWise to Vercel
-cd /d "%~dp0frontend"
+cd /d "%~dp0..\frontend"
 echo ========================================================
 echo          Deploy BreatheWise Next.js to Vercel
 echo ========================================================
-set "PATH=D:\nodejs;C:\Users\kushw\AppData\Roaming\npm;%PATH%"
 
 echo.
 echo Running Vercel deployment...

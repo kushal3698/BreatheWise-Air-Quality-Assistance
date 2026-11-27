@@ -1,8 +1,9 @@
 import logging
 import time
 from collections import defaultdict
+from typing import Awaitable, Callable
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -27,7 +28,7 @@ _REQUEST_HISTORY: dict[str, list[float]] = defaultdict(list)
 
 # Rate Limiting Middleware
 @app.middleware("http")
-async def rate_limiting_middleware(request: Request, call_next):
+async def rate_limiting_middleware(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     """
     Enforces per-client IP rate limiting to prevent automated scraping and DoS.
     """
@@ -58,7 +59,7 @@ async def rate_limiting_middleware(request: Request, call_next):
 
 # Security Headers Middleware
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
+async def add_security_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     """
     Injects OWASP recommended HTTP security headers across all responses.
     """
@@ -75,7 +76,7 @@ async def add_security_headers(request: Request, call_next):
 
 # Global Exception Handler (Suppresses Internal Stack Traces)
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Catches all unhandled exceptions, logs detailed traces internally,
     and returns a safe generic JSON error to prevent security leakage.

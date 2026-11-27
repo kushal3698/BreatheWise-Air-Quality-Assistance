@@ -218,7 +218,118 @@ def compute_safe_windows(hourly_forecast: List[Dict[str, Any]]) -> List[Dict[str
     return safe_windows
 
 
+async def _fetch_open_meteo_raw(loc: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Fetches air quality and meteorological forecast in parallel from Open-Meteo.
+    """
+    import asyncio
+
+    async with httpx.AsyncClient(timeout=3.0) as client:
+        aq_task = client.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={
+                "latitude": loc["lat"],
+                "longitude": loc["lon"],
+                "current": "pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone",
+                "hourly": "pm10,pm2_5",
+                "forecast_days": 2,
+                "timezone": "auto",
+            },
+        )
+        weather_task = client.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": loc["lat"],
+                "longitude": loc["lon"],
+                "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m",
+                "timezone": "auto",
+            },
+        )
+        aq_resp, weather_resp = await asyncio.gather(aq_task, weather_task)
+        if aq_resp.status_code == 200 and weather_resp.status_code == 200:
+            return aq_resp.json(), weather_resp.json()
+        raise RuntimeError(f"Open-Meteo returned status {aq_resp.status_code}/{weather_resp.status_code}")
+
+
+def _build_hourly_forecast(hourly: Dict[str, Any], default_pm25: float, default_pm10: float) -> List[Dict[str, Any]]:
+    """
+    Parses 2-hourly forecast samples for the diurnal forecast chart.
+    """
+    times = hourly.get("time", [])
+    h_pm25 = hourly.get("pm2_5", [])
+    h_pm10 = hourly.get("pm10", [])
+
+    forecast_items = []
+    for i in range(0, min(len(times), 24), 2):
+        t_str = times[i]
+        hour_label = t_str.split("T")[-1][:5] if "T" in t_str else f"{i:02d}:00"
+        val_25 = float(h_pm25[i]) if i < len(h_pm25) and h_pm25[i] is not None else default_pm25
+        val_10 = float(h_pm10[i]) if i < len(h_pm10) and h_pm10[i] is not None else default_pm10
+        h_aqi = calculate_cpcb_aqi(val_25, val_10)
+        forecast_items.append({"hour": hour_label, "aqi": h_aqi, "pm2_5": round(val_25, 1)})
+    return forecast_items
+
+
+def _assemble_live_payload(loc: Dict[str, Any], aq_data: Dict[str, Any], w_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Combines live raw telemetry, CPCB calculated sub-indices, and weather metrics into the standard payload.
+    """
+    curr_aq = aq_data.get("current", {})
+    pm2_5 = float(curr_aq.get("pm2_5", 50.0))
+    pm10 = float(curr_aq.get("pm10", 80.0))
+    no2 = curr_aq.get("nitrogen_dioxide")
+    so2 = curr_aq.get("sulphur_dioxide")
+    co = curr_aq.get("carbon_monoxide")
+    if co is not None:
+        co = round(co / 1000.0, 2)  # µg/m3 to mg/m3 approx
+    o3 = curr_aq.get("ozone")
+
+    aqi = calculate_cpcb_aqi(pm2_5=pm2_5, pm10=pm10, no2=no2, so2=so2, co=co, o3=o3)
+    category, color = get_aqi_category_and_color(aqi)
+
+    curr_w = w_data.get("current", {})
+    temp_c = float(curr_w.get("temperature_2m", 24.0))
+    humidity = int(curr_w.get("relative_humidity_2m", 50))
+    wind_kmh = float(curr_w.get("wind_speed_10m", 8.0))
+
+    forecast_items = _build_hourly_forecast(aq_data.get("hourly", {}), pm2_5, pm10)
+    safe_windows = compute_safe_windows(forecast_items)
+    station_distance = round(1.5 + (hash(loc["name"]) % 25) / 10.0, 1)
+
+    return {
+        "location": loc,
+        "station": {"name": f"{loc['name']} Continuous Ambient Station", "distance_km": station_distance},
+        "current": {
+            "aqi": aqi,
+            "category": category,
+            "cpcb_color": color,
+            "pm2_5": round(pm2_5, 1),
+            "pm10": round(pm10, 1),
+            "no2": round(no2, 1) if no2 is not None else 35.0,
+            "so2": round(so2, 1) if so2 is not None else 12.0,
+            "co": co if co is not None else 1.2,
+            "o3": round(o3, 1) if o3 is not None else 25.0,
+        },
+        "weather": {
+            "temp_c": round(temp_c, 1),
+            "humidity": humidity,
+            "wind_kmh": round(wind_kmh, 1),
+            "wind_direction": "NW",
+            "conditions": "Inversion Smog" if aqi > 250 else "Haze / Clear",
+        },
+        "forecast": forecast_items,
+        "safe_windows": safe_windows,
+        "source": "open-meteo / CPCB",
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "is_stale": False,
+    }
+
+
 async def fetch_air_quality(city: str) -> Dict[str, Any]:
+    """
+    Fetches real-time air quality, calculates CPCB NAQI, parses diurnal safe windows,
+    and returns a normalized telemetry payload with cache and demo fallback resilience.
+    """
     loc = await geocode_city(city)
     cache_key = f"{loc['lat']:.3f}_{loc['lon']:.3f}"
     now = time.time()
@@ -235,103 +346,10 @@ async def fetch_air_quality(city: str) -> Dict[str, Any]:
         return load_demo_aqi(city, loc)
 
     try:
-        import asyncio
-
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            # Fetch Air Quality and Weather in parallel with asyncio.gather
-            aq_task = client.get(
-                "https://air-quality-api.open-meteo.com/v1/air-quality",
-                params={
-                    "latitude": loc["lat"],
-                    "longitude": loc["lon"],
-                    "current": "pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone",
-                    "hourly": "pm10,pm2_5",
-                    "forecast_days": 2,
-                    "timezone": "auto",
-                },
-            )
-            weather_task = client.get(
-                "https://api.open-meteo.com/v1/forecast",
-                params={
-                    "latitude": loc["lat"],
-                    "longitude": loc["lon"],
-                    "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m",
-                    "timezone": "auto",
-                },
-            )
-            aq_resp, weather_resp = await asyncio.gather(aq_task, weather_task)
-
-            if aq_resp.status_code == 200 and weather_resp.status_code == 200:
-                aq_data = aq_resp.json()
-                w_data = weather_resp.json()
-
-                curr_aq = aq_data.get("current", {})
-                pm2_5 = float(curr_aq.get("pm2_5", 50.0))
-                pm10 = float(curr_aq.get("pm10", 80.0))
-                no2 = curr_aq.get("nitrogen_dioxide")
-                so2 = curr_aq.get("sulphur_dioxide")
-                co = curr_aq.get("carbon_monoxide")
-                if co is not None:
-                    co = round(co / 1000.0, 2)  # µg/m3 to mg/m3 approx
-                o3 = curr_aq.get("ozone")
-
-                aqi = calculate_cpcb_aqi(pm2_5=pm2_5, pm10=pm10, no2=no2, so2=so2, co=co, o3=o3)
-                category, color = get_aqi_category_and_color(aqi)
-
-                curr_w = w_data.get("current", {})
-                temp_c = float(curr_w.get("temperature_2m", 24.0))
-                humidity = int(curr_w.get("relative_humidity_2m", 50))
-                wind_kmh = float(curr_w.get("wind_speed_10m", 8.0))
-
-                # Hourly forecast parsing (next 12 intervals, 2-hourly)
-                hourly = aq_data.get("hourly", {})
-                times = hourly.get("time", [])
-                h_pm25 = hourly.get("pm2_5", [])
-                h_pm10 = hourly.get("pm10", [])
-
-                forecast_items = []
-                for i in range(0, min(len(times), 24), 2):
-                    t_str = times[i]
-                    hour_label = t_str.split("T")[-1][:5] if "T" in t_str else f"{i:02d}:00"
-                    val_25 = float(h_pm25[i]) if i < len(h_pm25) and h_pm25[i] is not None else pm2_5
-                    val_10 = float(h_pm10[i]) if i < len(h_pm10) and h_pm10[i] is not None else pm10
-                    h_aqi = calculate_cpcb_aqi(val_25, val_10)
-                    forecast_items.append({"hour": hour_label, "aqi": h_aqi, "pm2_5": round(val_25, 1)})
-
-                safe_windows = compute_safe_windows(forecast_items)
-
-                station_distance = round(1.5 + (hash(loc["name"]) % 25) / 10.0, 1)
-
-                result = {
-                    "location": loc,
-                    "station": {"name": f"{loc['name']} Continuous Ambient Station", "distance_km": station_distance},
-                    "current": {
-                        "aqi": aqi,
-                        "category": category,
-                        "cpcb_color": color,
-                        "pm2_5": round(pm2_5, 1),
-                        "pm10": round(pm10, 1),
-                        "no2": round(no2, 1) if no2 is not None else 35.0,
-                        "so2": round(so2, 1) if so2 is not None else 12.0,
-                        "co": co if co is not None else 1.2,
-                        "o3": round(o3, 1) if o3 is not None else 25.0,
-                    },
-                    "weather": {
-                        "temp_c": round(temp_c, 1),
-                        "humidity": humidity,
-                        "wind_kmh": round(wind_kmh, 1),
-                        "wind_direction": "NW",
-                        "conditions": "Inversion Smog" if aqi > 250 else "Haze / Clear",
-                    },
-                    "forecast": forecast_items,
-                    "safe_windows": safe_windows,
-                    "source": "open-meteo / CPCB",
-                    "fetched_at": datetime.now(timezone.utc).isoformat(),
-                    "is_stale": False,
-                }
-
-                _CACHE[cache_key] = {"cached_at": now, "data": result}
-                return result
+        aq_data, w_data = await _fetch_open_meteo_raw(loc)
+        result = _assemble_live_payload(loc, aq_data, w_data)
+        _CACHE[cache_key] = {"cached_at": now, "data": result}
+        return result
     except Exception:
         # Fallback to cached or demo if network fails
         if cache_key in _CACHE:

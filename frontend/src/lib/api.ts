@@ -1,5 +1,7 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
+export type { SupportedLanguage } from './i18n';
+
 export interface AirQualityLocation {
   name: string;
   state?: string;

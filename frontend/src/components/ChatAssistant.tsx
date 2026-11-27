@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Send, Bot, User, Sparkles, BookOpen, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { sendChatMessage, ChatMessage, HouseholdProfile } from '@/lib/api';
+import { logger } from '@/lib/logger';
 import { generateLocalChatReply } from '@/lib/chatEngine';
 
 interface ChatAssistantProps {
@@ -50,7 +51,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
         setSuggestions(resp.suggested_questions);
       }
     } catch (err) {
-      console.warn('Backend unavailable, using grounded local chat engine:', err);
+      logger.warn('Backend unavailable, using grounded local chat engine:', err);
       const localResp = generateLocalChatReply(text, city, language, household);
       const assistantMsg: ChatMessage = { role: 'assistant', content: localResp.reply };
       setMessages(prev => [...prev, assistantMsg]);

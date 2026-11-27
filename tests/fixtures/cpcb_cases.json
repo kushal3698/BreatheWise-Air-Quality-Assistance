@@ -1,0 +1,102 @@
+[
+  {
+    "description": "Real-world Delhi winter inversion smog episode",
+    "inputs": { "pm2_5": 178.4, "pm10": 288.0, "no2": 45.2, "so2": 14.8, "co": 1.9, "o3": 28.5 },
+    "expected": {
+      "aqi": 345,
+      "category": "Very Poor",
+      "dominant_pollutant": "PM2.5",
+      "sub_indices": { "pm2_5": 345, "pm10": 238, "no2": 56, "so2": 19, "co": 95, "o3": 29 }
+    }
+  },
+  {
+    "description": "Bengaluru moderate traffic baseline",
+    "inputs": { "pm2_5": 38.0, "pm10": 118.3, "no2": 22.0, "so2": 6.2, "co": 0.6, "o3": 22.0 },
+    "expected": {
+      "aqi": 112,
+      "category": "Moderate",
+      "dominant_pollutant": "PM10",
+      "sub_indices": { "pm2_5": 63, "pm10": 112, "no2": 28, "so2": 8, "co": 30, "o3": 22 }
+    }
+  },
+  {
+    "description": "Satisfactory coastal breeze episode",
+    "inputs": { "pm2_5": 25.0, "pm10": 75.0, "no2": 30.0, "so2": 5.0, "co": 0.5, "o3": 18.0 },
+    "expected": {
+      "aqi": 75,
+      "category": "Satisfactory",
+      "dominant_pollutant": "PM10",
+      "sub_indices": { "pm2_5": 42, "pm10": 75, "no2": 38, "so2": 6, "co": 25, "o3": 18 }
+    }
+  },
+  {
+    "description": "Pristine highland good air quality",
+    "inputs": { "pm2_5": 12.0, "pm10": 28.0, "no2": 15.0, "so2": 4.0, "co": 0.4, "o3": 15.0 },
+    "expected": {
+      "aqi": 28,
+      "category": "Good",
+      "dominant_pollutant": "PM10",
+      "sub_indices": { "pm2_5": 20, "pm10": 28, "no2": 19, "so2": 5, "co": 20, "o3": 15 }
+    }
+  },
+  {
+    "description": "Critical severe smog emergency threshold",
+    "inputs": { "pm2_5": 320.0, "pm10": 450.0, "no2": 280.0, "so2": 25.0, "co": 2.5, "o3": 35.0 },
+    "expected": {
+      "aqi": 454,
+      "category": "Severe",
+      "dominant_pollutant": "PM2.5",
+      "sub_indices": { "pm2_5": 454, "pm10": 450, "no2": 300, "so2": 31, "co": 105, "o3": 35 }
+    }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM2.5 Good ceiling (30)",
+    "inputs": { "pm2_5": 30.0 },
+    "expected": { "aqi": 50, "category": "Good", "dominant_pollutant": "PM2.5" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM2.5 Satisfactory ceiling (60)",
+    "inputs": { "pm2_5": 60.0 },
+    "expected": { "aqi": 100, "category": "Satisfactory", "dominant_pollutant": "PM2.5" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM2.5 Moderate ceiling (90)",
+    "inputs": { "pm2_5": 90.0 },
+    "expected": { "aqi": 200, "category": "Moderate", "dominant_pollutant": "PM2.5" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM2.5 Poor ceiling (120)",
+    "inputs": { "pm2_5": 120.0 },
+    "expected": { "aqi": 300, "category": "Poor", "dominant_pollutant": "PM2.5" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM2.5 Very Poor ceiling (250)",
+    "inputs": { "pm2_5": 250.0 },
+    "expected": { "aqi": 400, "category": "Very Poor", "dominant_pollutant": "PM2.5" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM10 Good ceiling (50)",
+    "inputs": { "pm10": 50.0 },
+    "expected": { "aqi": 50, "category": "Good", "dominant_pollutant": "PM10" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM10 Satisfactory ceiling (100)",
+    "inputs": { "pm10": 100.0 },
+    "expected": { "aqi": 100, "category": "Satisfactory", "dominant_pollutant": "PM10" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM10 Moderate ceiling (250)",
+    "inputs": { "pm10": 250.0 },
+    "expected": { "aqi": 200, "category": "Moderate", "dominant_pollutant": "PM10" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM10 Poor ceiling (350)",
+    "inputs": { "pm10": 350.0 },
+    "expected": { "aqi": 300, "category": "Poor", "dominant_pollutant": "PM10" }
+  },
+  {
+    "description": "Breakpoint exact boundary: PM10 Very Poor ceiling (430)",
+    "inputs": { "pm10": 430.0 },
+    "expected": { "aqi": 400, "category": "Very Poor", "dominant_pollutant": "PM10" }
+  }
+]

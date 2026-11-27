@@ -77,8 +77,8 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({
             />
             <Tooltip
               contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
-              formatter={(value: any) => [
-                `${value}`,
+              formatter={(value: number | string | (number | string)[] | undefined) => [
+                `${Array.isArray(value) ? value.join(', ') : (value ?? 0)}`,
                 'CPCB AQI'
               ]}
             />
