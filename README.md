@@ -51,7 +51,7 @@ Each clause of the official Challenge 6 brief is mapped to the code that impleme
 
 | Challenge 6 Requirement | Implementation Module | Source File(s) | Verification & Evidence |
 |:---|:---|:---|:---|
-| **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. Live demo is rule-based; Gemini is used when a key is set. |
+| **GenAI-Powered Assistant** | Multi-lingual RAG-grounded conversational agent with document citations and localized context | `frontend/src/components/ChatAssistant.tsx`<br>`backend/app/routers/chat.py`<br>`backend/app/services/llm/` | Natural conversational interface in **English, Hindi, Telugu, and Tamil**. Answers user queries with domain grounding (`indoor_air_quality.md`, `vulnerable_groups.md`) and non-medical disclaimers. Live Vercel deployment runs live Gemini (`GEMINI_MODEL`, `DEMO_MODE=false`) with automatic rule-based fallback. |
 | **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD). Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse). |
 | **Helps Communities Navigate Smog** | School Guidance Protocols & Neighborhood Community Challenges with real-time feedback | `frontend/src/components/SchoolView.tsx`<br>`frontend/src/components/CommunityView.tsx`<br>`backend/app/routers/school.py`<br>`backend/app/routers/community.py` | Operational protocols for morning assembly, sports PE, and recess ventilation. Neighborhood leaderboards with car-free challenges and cumulative community CO₂ counters. |
 | **Suggests Low-Emission Daily Routines** | Dynamic Daily Action Planner with diurnal curve synchronization | `frontend/src/components/PlanCard.tsx`<br>`backend/app/routers/plan.py`<br>`backend/app/services/air_quality.py` | Recommends optimal exercise windows (shifting from morning inversion to afternoon thermal mixing), work-from-home coordination, and trip consolidation. |
@@ -172,15 +172,15 @@ flowchart TD
     end
 
     UI --> NAV --> ROUTE_AQI & ROUTE_PLAN & ROUTE_CHAT & ROUTE_COMM
-    ROUTE_AQI --> AQ_SVC
-    ROUTE_PLAN --> IMPACT_SVC & SAFETY_SVC
-    ROUTE_CHAT --> RAG_SVC --> LLM_SVC
+    Serverless -. "Optional Proxy (INTERNAL_API_URL) / Serverless Fallback" .-> API_GW
+    API_GW --> AQ_SVC & IMPACT_SVC & SAFETY_SVC & RAG_SVC
+    RAG_SVC --> LLM_SVC
     AQ_SVC --> GEO
     IMPACT_SVC --> EMISSIONS
     RAG_SVC --> KB
 ```
 
-> **Live Deployment Note:** On the live Vercel deployment, `/api/chat`, `/api/aqi`, and `/api/plan` run via lightweight Next.js serverless functions with complete offline pre-calibrated telemetry and grounded rule-based responses (proxying to Gemini when `GEMINI_API_KEY` is provided, configurable via `GEMINI_MODEL`). If the model call fails, the assistant falls back to the rule-based provider. The standalone FastAPI service powers local Python development and containerized Docker setups.
+> **Live Deployment Note:** On the live Vercel deployment (`https://breathewise-nine.vercel.app`, with `DEMO_MODE=false` and `GEMINI_API_KEY` configured), `/api/aqi` serves live 6-pollutant Open-Meteo hourly dispersion forecasts, and `/api/chat` and `/api/plan` invoke live Gemini (`GEMINI_MODEL`, defaulting to `gemini-3.5-flash` with Flash fallback) via Next.js serverless routes while enforcing deterministic `impact_summary` figures and medical cautions. When `DEMO_MODE=true` or an upstream API is unavailable, routes fall back seamlessly to pre-calibrated telemetry and the grounded rule-based engine. Setting `INTERNAL_API_URL` optionally proxies `/api/*` to the standalone FastAPI service (`https://backend-virid-omega-y3vu6py2nl.vercel.app`), Docker, or local Python dev.
 
 ---
 

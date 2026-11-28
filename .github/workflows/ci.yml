@@ -41,8 +41,8 @@ jobs:
           DEMO_MODE: 'true'
         run: npm test -- --run --coverage
 
-      - name: Dependency Vulnerability Audit (Production)
-        run: npm audit --omit=dev --audit-level=high
+      - name: Dependency Vulnerability Audit
+        run: npm audit --audit-level=high
         continue-on-error: true
 
       - name: Build Next.js Production Bundle
