@@ -37,6 +37,8 @@ jobs:
         run: npm run lint
 
       - name: Run Frontend Vitest Suite with Coverage (85%+ Floor)
+        env:
+          DEMO_MODE: 'true'
         run: npm test -- --run --coverage
 
       - name: Dependency Vulnerability Audit (Production)
@@ -50,6 +52,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright E2E + Axe Accessibility Spec
+        env:
+          DEMO_MODE: 'true'
         run: npm run test:e2e
 
   backend-ci:

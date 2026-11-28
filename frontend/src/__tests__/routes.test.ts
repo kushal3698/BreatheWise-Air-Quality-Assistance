@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 import { NextRequest } from 'next/server';
 import { GET as getAQI } from '../app/api/aqi/route';
@@ -9,6 +9,20 @@ import { GET as getLeaderboard } from '../app/api/community/leaderboard/route';
 import { sanitizeChatMessage, sanitizeCity } from '../lib/sanitize';
 
 describe('Serverless API Routes Verification', () => {
+  const originalDemoMode = process.env.DEMO_MODE;
+
+  beforeEach(() => {
+    process.env.DEMO_MODE = 'true';
+  });
+
+  afterEach(() => {
+    if (originalDemoMode === undefined) {
+      delete process.env.DEMO_MODE;
+    } else {
+      process.env.DEMO_MODE = originalDemoMode;
+    }
+  });
+
   it('GET /api/aqi returns calibrated CPCB telemetry for Delhi', async () => {
     const req = new NextRequest('http://localhost:3000/api/aqi?city=Delhi');
     const res = await getAQI(req);

@@ -22,11 +22,16 @@ const SAMPLE_HOUSEHOLD = {
 
 describe('Frontend API Client, Local Chat Engine, and Live Route Branches', () => {
   const originalFetch = globalThis.fetch;
+  const originalDemoMode = process.env.DEMO_MODE;
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
-    delete process.env.DEMO_MODE;
+    if (originalDemoMode === undefined) {
+      delete process.env.DEMO_MODE;
+    } else {
+      process.env.DEMO_MODE = originalDemoMode;
+    }
     delete process.env.GEMINI_API_KEY;
   });
 
