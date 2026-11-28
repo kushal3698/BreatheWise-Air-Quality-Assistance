@@ -39,7 +39,7 @@ export function ChallengeCard({ challenge, description, isJoined, onToggleJoin }
           className={`text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer transition-all ${
             isJoined
               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold'
-              : 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-xs'
+              : 'bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs'
           }`}
         >
           {isJoined ? 'Joined ✓' : 'Join Challenge'}

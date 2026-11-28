@@ -1,4 +1,4 @@
-import { ChatResponse, HouseholdProfile, ChatMessage } from './api';
+import { ChatResponse, HouseholdProfile } from './api';
 import { getCityPresetAQI } from './initialData';
 
 export function generateLocalChatReply(
@@ -11,9 +11,9 @@ export function generateLocalChatReply(
   const aqiData = getCityPresetAQI(city);
   const aqi = aqiData.current.aqi;
   const cat = aqiData.current.category;
-  const safeWindows = aqiData.safe_windows || [];
-  const safeWindowStr = safeWindows.length > 0
-    ? `${safeWindows[0].start} to ${safeWindows[0].end} (AQI drops to ~${safeWindows[0].avg_aqi})`
+  const firstSafeWindow = aqiData.safe_windows?.[0];
+  const safeWindowStr = firstSafeWindow
+    ? `${firstSafeWindow.start} to ${firstSafeWindow.end} (AQI drops to ~${firstSafeWindow.avg_aqi})`
     : '13:00 to 16:00 (peak afternoon solar convection)';
 
   const hasAsthma = household?.members?.some(m => m.sensitivities?.includes('asthma')) || false;
@@ -42,7 +42,6 @@ export function generateLocalChatReply(
     msgLower.includes('4 pm') ||
     msgLower.includes('7 am')
   ) {
-    const isDelhiVeryPoor = aqi > 200;
     const peakCaution = hasAsthma
       ? '⚠️ **High Sensitivity Caution:** A household member has respiratory sensitivity (asthma). Even moderate outdoor cardio can trigger bronchospasms.'
       : '';

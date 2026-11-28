@@ -29,7 +29,7 @@ class GeminiLLMProvider(BaseLLMProvider):
     If the model call fails, times out, or no API key is provided, the assistant falls back to the rule-based provider.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.demo = DemoLLMProvider()
 
     async def generate_plan(

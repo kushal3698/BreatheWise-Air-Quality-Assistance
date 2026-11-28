@@ -35,4 +35,4 @@ async def chat_with_breathewise(request: ChatRequest) -> ChatResponse:
         history=history_dicts,
     )
 
-    return reply_dict
+    return ChatResponse(**reply_dict)

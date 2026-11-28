@@ -133,12 +133,14 @@ export function calculateCPCB_SubIndex(
   breakpoints: Array<{ c_low: number; c_high: number; i_low: number; i_high: number }>,
   roundConc: boolean = true
 ): number {
-  if (conc <= 0) return 0;
+  if (conc <= 0 || breakpoints.length === 0) return 0;
   const c_eval = roundConc ? Math.round(conc) : conc;
-  let matched_bp = null;
+  let matched_bp: { c_low: number; c_high: number; i_low: number; i_high: number } | null = null;
   for (let i = 0; i < breakpoints.length; i++) {
     const bp = breakpoints[i];
-    const prev_high = i > 0 ? breakpoints[i - 1].c_high : 0;
+    if (!bp) continue;
+    const prev_bp = i > 0 ? breakpoints[i - 1] : undefined;
+    const prev_high = prev_bp ? prev_bp.c_high : 0;
     if (c_eval >= bp.c_low && c_eval <= bp.c_high) {
       matched_bp = bp;
       break;
@@ -148,8 +150,9 @@ export function calculateCPCB_SubIndex(
     }
   }
   if (!matched_bp) {
-    if (c_eval > breakpoints[breakpoints.length - 1].c_high) {
-      return breakpoints[breakpoints.length - 1].i_high;
+    const lastBp = breakpoints[breakpoints.length - 1];
+    if (lastBp && c_eval > lastBp.c_high) {
+      return lastBp.i_high;
     }
     return 0;
   }
@@ -181,8 +184,9 @@ export function calculateCPCB_AQI(
   const subIndices: Record<string, number> = {};
 
   for (const [key, val] of Object.entries(pollutants)) {
-    if (val !== undefined && val !== null && CPCB_BREAKPOINTS[key]) {
-      subIndices[key] = calculateCPCB_SubIndex(val, CPCB_BREAKPOINTS[key], roundConc);
+    const bps = CPCB_BREAKPOINTS[key];
+    if (val !== undefined && val !== null && bps) {
+      subIndices[key] = calculateCPCB_SubIndex(val, bps, roundConc);
     }
   }
 

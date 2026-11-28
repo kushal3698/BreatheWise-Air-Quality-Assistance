@@ -72,10 +72,11 @@ describe('BreatheWise Application Core Logic', () => {
     const delhi = getCityPresetAQI('Delhi');
     expect(delhi.safe_windows.length).toBeGreaterThan(0);
     const win = delhi.safe_windows[0];
-    expect(win.guidance).toContain('Lowest forecast AQI today');
+    expect(win).toBeDefined();
+    expect(win?.guidance).toContain('Lowest forecast AQI today');
     // Window start matches afternoon dispersion
-    expect(win.start).toBe('13:30');
-    expect(win.end).toBe('16:30');
+    expect(win?.start).toBe('13:30');
+    expect(win?.end).toBe('16:30');
   });
 
   it('tailors transit alternatives by city type: Guntur does not claim metro while Delhi does', () => {

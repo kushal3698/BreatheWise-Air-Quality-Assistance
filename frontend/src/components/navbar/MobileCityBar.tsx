@@ -82,7 +82,7 @@ export function MobileCityBar({
               onClick={() => handleCitySelect(c)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-emerald-600 text-white font-bold shadow-md scale-105 ring-2 ring-emerald-400 ring-offset-1'
+                  ? 'bg-emerald-700 text-white font-bold shadow-md scale-105 ring-2 ring-emerald-400 ring-offset-1'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95'
               }`}
             >

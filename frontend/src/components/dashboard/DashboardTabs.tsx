@@ -42,8 +42,11 @@ export function DashboardTabs({ activeTab, onChange, labels }: DashboardTabsProp
 
     if (nextIdx !== null) {
       e.preventDefault();
-      onChange(TAB_CONFIG[nextIdx].id);
-      buttonRefs.current[nextIdx]?.focus();
+      const targetTab = TAB_CONFIG[nextIdx];
+      if (targetTab) {
+        onChange(targetTab.id);
+        buttonRefs.current[nextIdx]?.focus();
+      }
     }
   };
 
@@ -67,7 +70,7 @@ export function DashboardTabs({ activeTab, onChange, labels }: DashboardTabsProp
               onClick={() => onChange(id)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
               className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                selected ? 'bg-emerald-600 text-white shadow-xs' : 'hover:bg-slate-100'
+                selected ? 'bg-emerald-700 text-white shadow-xs' : 'hover:bg-slate-100'
               }`}
             >
               <Icon className="w-4 h-4" aria-hidden="true" />

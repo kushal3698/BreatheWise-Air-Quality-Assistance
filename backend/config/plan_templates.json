@@ -1,0 +1,64 @@
+{
+  "metro_cities": [
+    "delhi",
+    "new delhi",
+    "noida",
+    "greater noida",
+    "gurugram",
+    "gurgaon",
+    "ghaziabad",
+    "faridabad",
+    "mumbai",
+    "navi mumbai",
+    "bengaluru",
+    "bangalore",
+    "kolkata",
+    "hyderabad",
+    "chennai",
+    "ahmedabad",
+    "pune",
+    "jaipur",
+    "lucknow",
+    "kochi",
+    "kanpur",
+    "nagpur"
+  ],
+  "localized_chat_headers": {
+    "hi": "**{city} में वर्तमान वायु गुणवत्ता: {cat} (AQI {aqi})**\n\n",
+    "te": "**{city} లో ప్రస్తుత గాలి నాణ్యత: {cat} (AQI {aqi})**\n\n",
+    "ta": "**{city} இல் தற்போதைய காற்றின் தரம்: {cat} (AQI {aqi})**\n\n"
+  },
+  "summary_templates": {
+    "hi": "आज {city} में वायु गुणवत्ता '{cat}' (AQI {aqi}) है। सुबह {peak_morning_aqi} के पीक पर सावधानी बरतें और सुरक्षित दोपहर खिड़की ({safe_text}) का उपयोग करें।",
+    "te": "ఈరోజు {city} లో గాలి నాణ్యత '{cat}' (AQI {aqi}) గా ఉంది. ఉదయం పీక్ సమయంలో జాగ్రత్త వహించండి మరియు మధ్యాహ్న సేఫ్ విండో ({safe_text}) ను ఉపయోగించండి.",
+    "ta": "இன்று {city} இல் காற்றின் தரம் '{cat}' (AQI {aqi}). காலை நெரிசல் நேரத்தில் தீவிர உடற்பயிற்சியைத் தவிர்க்கவும், பாதுகாப்பான நேரத்தைப் ({safe_text}) பயன்படுத்தவும்."
+  },
+  "purifier_comparison_reply": "**Commercial Air Purifier vs. DIY Corsi-Rosenthal (C-R) Box:**\n\n| Feature | Commercial HEPA Purifier | DIY Corsi-Rosenthal Box |\n|---|---|---|\n| **Upfront Cost** | ₹10,000 – ₹25,000 INR | **₹3,000 – ₹4,000 INR** |\n| **Clean Air Delivery (CADR)** | 150 – 250 CFM | **350 – 450 CFM** (superior airflow) |\n| **Filtration Level** | True HEPA (99.97%) | MERV-13 (90-95% for PM2.5) |\n| **Room Coverage** | Ideal for 120–200 sq ft bedroom | Excellent for large living rooms (400+ sq ft) |\n| **Noise Level** | Very quiet (sleep mode) | Moderate fan hum |\n\n**Verdict:** If budget is a constraint or you need to clean a large shared living space/classroom, the DIY Corsi-Rosenthal box provides the highest clean air per rupee.",
+  "chat_suggestions": {
+    "child": [
+      "What indoor activities can replace outdoor sports?",
+      "Which mask is safe and fits a child properly?",
+      "What are the best safe windows tomorrow?"
+    ],
+    "commute": [
+      "How much CO2 does my household save by carpooling?",
+      "Should two-wheeler riders wear an N95 mask?",
+      "How to seal car cabin air effectively?"
+    ],
+    "purifier": [
+      "What materials are needed to build a C-R box?",
+      "How often should HEPA filters be replaced?",
+      "Do houseplants clean air as well as purifiers?"
+    ],
+    "plan": [
+      "How to protect asthmatic family members during smog?",
+      "What is the best time to ventilate our home today?",
+      "Can you calculate our monthly fuel savings?"
+    ],
+    "default": [
+      "Should my 8-year-old play outside at 4 PM?",
+      "Plan my commute tomorrow to minimise pollution",
+      "Is it worth buying a purifier or building a DIY one?"
+    ]
+  }
+}

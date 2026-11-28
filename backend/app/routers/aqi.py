@@ -20,4 +20,4 @@ async def get_air_quality(
     """
     safe_city = coerce_safe_city(city)
     data = await fetch_air_quality(safe_city)
-    return data
+    return AirQualityResponse(**data)

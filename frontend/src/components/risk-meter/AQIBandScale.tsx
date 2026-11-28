@@ -50,12 +50,11 @@ export const AQIBandScale: React.FC<AQIBandScaleProps> = ({
           const isActive = idx === activeBandIdx;
           return (
             <div key={b.name} className="flex flex-col items-center">
-              <span className={`text-[10px] ${isActive ? 'font-black text-slate-900' : 'text-slate-400 font-medium'}`}>
+              <span className={`text-[10px] ${isActive ? 'font-black text-slate-900' : 'text-slate-600 font-medium'}`}>
                 {b.range}
               </span>
               <span 
-                className={`text-[10px] leading-tight ${isActive ? 'font-bold' : 'text-slate-400 font-normal'}`} 
-                style={{ color: isActive ? b.color : undefined }}
+                className={`text-[10px] leading-tight ${isActive ? 'font-extrabold text-slate-900 underline decoration-2' : 'text-slate-600 font-normal'}`}
               >
                 {b.name}
               </span>

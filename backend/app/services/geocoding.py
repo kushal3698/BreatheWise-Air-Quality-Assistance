@@ -1,6 +1,9 @@
+import logging
 from typing import Any, Dict
 
 import httpx
+
+logger = logging.getLogger("breathewise.geocoding")
 
 KNOWN_LOCATIONS: Dict[str, Dict[str, Any]] = {
     "delhi": {"name": "Delhi", "state": "Delhi", "country": "India", "lat": 28.6139, "lon": 77.2090},
@@ -100,8 +103,8 @@ async def geocode_city(city_query: str) -> Dict[str, Any]:
                         "lat": float(first.get("latitude")),
                         "lon": float(first.get("longitude")),
                     }
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Open-Meteo geocoding fallback for %r: %s", city_query, type(exc).__name__)
 
     # Default fallback to Delhi with customized name
     fallback = dict(KNOWN_LOCATIONS["delhi"])

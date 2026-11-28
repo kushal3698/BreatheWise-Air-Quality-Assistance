@@ -12,7 +12,8 @@ def load_json_config(filename: str) -> Dict[str, Any]:
     cfg_path = settings.config_dir / filename
     if cfg_path.exists():
         with open(cfg_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data: Dict[str, Any] = json.load(f)
+            return data
     return {}
 
 

@@ -39,9 +39,10 @@ async def generate_daily_plan(request: DailyPlanRequest) -> DailyPlanResponse:
     )
 
     current = aqi_data.get("current", {})
-    return enforce_plan_guardrails(
+    secured_plan = enforce_plan_guardrails(
         plan_dict,
         aqi=int(current.get("aqi", 0)),
         category=str(current.get("category", "")),
         household=request.household,
     )
+    return DailyPlanResponse(**secured_plan)

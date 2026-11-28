@@ -1,0 +1,76 @@
+[
+  {
+    "description": "Delhi winter smog household (petrol car, no purifier, 2 WFH days)",
+    "outdoor_pm25": 178.4,
+    "household": {
+      "members": [
+        { "role": "child", "age": 8, "sensitivities": [] },
+        { "role": "adult", "age": 38, "sensitivities": ["asthma"] }
+      ],
+      "transport": { "mode": "petrol_car", "vehicles": 1, "school_run_km": 4.0, "commute_km": 15.0 },
+      "home": { "type": "apartment", "floor": 4, "has_purifier": false, "cooking_fuel": "LPG" },
+      "work_from_home_days": 2
+    },
+    "expected": {
+      "exposure_reduction_pct": 52.0,
+      "co2_avoided_kg_week": 23.7,
+      "cost_saved_inr_month": 4234,
+      "cigarettes_avoided_day": 4.2,
+      "requires_asthma_caution": true
+    }
+  },
+  {
+    "description": "Bengaluru moderate commute (EV car, purifier active, 3 WFH days)",
+    "outdoor_pm25": 38.0,
+    "household": {
+      "members": [{ "role": "adult", "age": 32, "sensitivities": [] }],
+      "transport": { "mode": "ev_car", "vehicles": 1, "school_run_km": 2.0, "commute_km": 10.0 },
+      "home": { "type": "apartment", "floor": 6, "has_purifier": true, "cooking_fuel": "induction" },
+      "work_from_home_days": 3
+    },
+    "expected": {
+      "exposure_reduction_pct": 33.0,
+      "co2_avoided_kg_week": 4.3,
+      "cost_saved_inr_month": 504,
+      "cigarettes_avoided_day": 0.6,
+      "requires_asthma_caution": false
+    }
+  },
+  {
+    "description": "Metro commuter zero WFH baseline (metro transit, no purifier)",
+    "outdoor_pm25": 190.0,
+    "household": {
+      "members": [{ "role": "adult", "age": 29, "sensitivities": [] }],
+      "transport": { "mode": "metro", "vehicles": 0, "school_run_km": 0.0, "commute_km": 20.0 },
+      "home": { "type": "apartment", "floor": 2, "has_purifier": false, "cooking_fuel": "LPG" },
+      "work_from_home_days": 0
+    },
+    "expected": {
+      "exposure_reduction_pct": 52.0,
+      "co2_avoided_kg_week": 0.0,
+      "cost_saved_inr_month": 0,
+      "cigarettes_avoided_day": 4.5,
+      "requires_asthma_caution": false
+    }
+  },
+  {
+    "description": "Severe diesel SUV family with child sensitivity risk",
+    "outdoor_pm25": 280.0,
+    "household": {
+      "members": [
+        { "role": "child", "age": 6, "sensitivities": ["copd"] },
+        { "role": "elderly", "age": 71, "sensitivities": [] }
+      ],
+      "transport": { "mode": "diesel_car", "vehicles": 1, "school_run_km": 6.0, "commute_km": 25.0 },
+      "home": { "type": "independent_house", "floor": 0, "has_purifier": false, "cooking_fuel": "LPG" },
+      "work_from_home_days": 1
+    },
+    "expected": {
+      "exposure_reduction_pct": 52.0,
+      "co2_avoided_kg_week": 30.5,
+      "cost_saved_inr_month": 4116,
+      "cigarettes_avoided_day": 6.6,
+      "requires_asthma_caution": true
+    }
+  }
+]

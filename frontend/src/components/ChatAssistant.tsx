@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Send, Bot, User, Sparkles, BookOpen, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen } from 'lucide-react';
 import { sendChatMessage, ChatMessage, HouseholdProfile } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import { generateLocalChatReply } from '@/lib/chatEngine';
@@ -81,7 +81,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
                 RAG Grounded
               </span>
             </h3>
-            <p className="text-xs text-slate-400">Live data + Household context: {city}</p>
+            <p className="text-xs text-slate-300">Live data + Household context: {city}</p>
           </div>
         </div>
       </div>
@@ -98,7 +98,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
             <div
               className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 ${
                 m.role === 'user'
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-emerald-700 text-white'
                   : 'bg-slate-100 text-slate-700'
               }`}
             >
@@ -108,7 +108,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
             <div
               className={`rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                 m.role === 'user'
-                  ? 'bg-emerald-600 text-white rounded-tr-none'
+                  ? 'bg-emerald-700 text-white rounded-tr-none'
                   : 'bg-slate-50 text-slate-800 border border-slate-200/80 rounded-tl-none whitespace-pre-wrap'
               }`}
             >
@@ -145,7 +145,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
 
       {/* Suggested Questions */}
       <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center gap-2 overflow-x-auto">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 shrink-0">
           Try:
         </span>
         {suggestions.map((q, i) => (
@@ -169,6 +169,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
       >
         <input
           type="text"
+          aria-label="Ask BreatheWise assistant a question"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={`Ask about routines, safe windows or purifier hacks in ${city}...`}
@@ -176,10 +177,11 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
         />
         <button
           type="submit"
+          aria-label="Send chat message"
           disabled={loading || !input.trim()}
-          className="p-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl transition-all cursor-pointer"
+          className="p-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl transition-all cursor-pointer"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden="true" />
         </button>
       </form>
     </div>

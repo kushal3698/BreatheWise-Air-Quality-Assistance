@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TrendingDown, Leaf, IndianRupee, HeartPulse, Sparkles, Check } from 'lucide-react';
+import { TrendingDown, Leaf, IndianRupee, HeartPulse, Check } from 'lucide-react';
 
 interface ImpactBarProps {
   exposureReductionPct: number;
@@ -25,7 +25,7 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
           <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             Quantified Direct Impact
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              Modelled estimate
+              {confidence}
             </span>
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">

@@ -48,9 +48,9 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({ data, isLive = false }) =>
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div className="flex items-center gap-2 text-slate-700">
-          <MapPin className="w-5 h-5 text-emerald-600" />
+          <MapPin className="w-5 h-5 text-emerald-700" />
           <span className="font-semibold text-lg">{location.name}</span>
-          {location.state && <span className="text-slate-400 text-sm">({location.state})</span>}
+          {location.state && <span className="text-slate-600 text-sm">({location.state})</span>}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
           {isLive && station.distance_km > 0 ? (
@@ -73,7 +73,7 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({ data, isLive = false }) =>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 my-6 items-center">
         {/* Left: AQI Number, Category Badge & Dominant Pollutant */}
         <div className="md:col-span-5 flex flex-col items-center md:items-start text-center md:text-left">
-          <div className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-1 flex items-center gap-1.5 flex-wrap">
+          <div className="text-xs uppercase tracking-wider font-semibold text-slate-600 mb-1 flex items-center gap-1.5 flex-wrap">
             <span>Current Air Quality Index (CPCB)</span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 normal-case">
               Current (11:00)

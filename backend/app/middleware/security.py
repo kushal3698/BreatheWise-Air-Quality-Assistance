@@ -54,7 +54,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def _init_redis(self, redis_url: str) -> None:
         try:
-            import redis  # type: ignore[import-not-found]
+            import redis
 
             client = redis.Redis.from_url(redis_url, decode_responses=True, socket_timeout=1)
             client.ping()

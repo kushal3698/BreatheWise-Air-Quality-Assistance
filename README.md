@@ -8,7 +8,7 @@
 
 [![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Tests-123%20Passed-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-135%20Passed-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 
@@ -55,9 +55,9 @@ Each clause of the official Challenge 6 brief is mapped to the code that impleme
 | **Helps Families Navigate Winter Smog** | Household Profiling Engine with sensitive-member tracking & tailored cautions | `frontend/src/components/HouseholdSelector.tsx`<br>`backend/app/services/safety.py`<br>`backend/app/models/schemas.py` | Configurable family profiles: track children, seniors, and respiratory sensitivities (asthma, COPD). Two caution triggers: (1) an inhaler caution is always shown when a household member has asthma/COPD, regardless of AQI; (2) a general air-quality caution is added when AQI reaches an unhealthy category (Poor or worse). |
 | **Helps Communities Navigate Smog** | School Guidance Protocols & Neighborhood Community Challenges with real-time feedback | `frontend/src/components/SchoolView.tsx`<br>`frontend/src/components/CommunityView.tsx`<br>`backend/app/routers/school.py`<br>`backend/app/routers/community.py` | Operational protocols for morning assembly, sports PE, and recess ventilation. Neighborhood leaderboards with car-free challenges and cumulative community CO₂ counters. |
 | **Suggests Low-Emission Daily Routines** | Dynamic Daily Action Planner with diurnal curve synchronization | `frontend/src/components/PlanCard.tsx`<br>`backend/app/routers/plan.py`<br>`backend/app/services/air_quality.py` | Recommends optimal exercise windows (shifting from morning inversion to afternoon thermal mixing), work-from-home coordination, and trip consolidation. |
-| **Indoor Air Quality Hacks** | Actionable, zero-cost and low-cost indoor mitigation techniques | `frontend/src/components/PlanCard.tsx`<br>`backend/app/knowledge_base/indoor_air_quality.md` | Wet mopping over sweeping, DIY Corsi-Rosenthal filtration boxes, window sealing during smog peaks, timed ventilation during afternoon dips, and kitchen exhaust protocols. |
+| **Indoor Air Quality Hacks** | Actionable, zero-cost and low-cost indoor mitigation techniques | `frontend/src/components/PlanCard.tsx`<br>`backend/knowledge_base/indoor_air_quality.md` | Wet mopping over sweeping, DIY Corsi-Rosenthal filtration boxes, window sealing during smog peaks, timed ventilation during afternoon dips, and kitchen exhaust protocols. |
 | **Sustainable Alternatives Tailored to Location & Lifestyle** | Location-aware multi-modal transit and lifestyle alternatives | `frontend/src/components/HouseholdSelector.tsx`<br>`frontend/src/lib/initialData.ts`<br>`backend/app/services/geocoding.py` | Metro-aware transit switches: recommends **bus/metro** in metro cities, and **public bus/shared electric shuttles** in non-metro cities (e.g. Guntur, Vijayawada). Tailored to vehicle fuel type, floor level, and cooking fuel. |
-| **Clearly Explaining Direct Impact of Choices** | Deterministic Mathematical Impact Engine with Before-vs-After comparison | `frontend/src/components/ImpactBar.tsx`<br>`backend/app/services/impact.py`<br>`backend/config/emission_factors.json` | Quantified numerical cards: **Exposure Avoided %**, **CO₂ Avoided (kg/week)**, **Cost Saved (₹/month)**, and **Cigarette Equivalents Avoided** (~22 µg/m³ PM2.5 / 24h ≈ 1 cigarette). |
+| **Clearly Explaining Direct Impact of Choices** | Deterministic & Interactive Direct Impact Simulator with Before-vs-After comparison | `frontend/src/components/ImpactBar.tsx`<br>`frontend/src/components/PlanCard.tsx`<br>`frontend/src/lib/impactSimulator.ts`<br>`backend/app/services/impact.py`<br>`backend/config/emission_factors.json` | Interactive action-toggle simulation dynamically updating **Exposure Avoided %**, **CO₂ Avoided (kg/week)**, **Cost Saved (₹/month)**, and **Cigarette Equivalents Avoided** (~22 µg/m³ PM2.5 / 24h ≈ 1 cigarette). |
 
 ---
 
@@ -91,8 +91,8 @@ The brief asks for help during **severe winter smog**. BreatheWise treats winter
 | Open burning | Zero Open-Burning Vigilance community challenge | `CommunityView.tsx` |
 | Vulnerable people | Asthma caution banner for sensitive members; school protocols for assembly, PE and recess | `safety.py`, `SchoolView.tsx` |
 
-### Honest note on the forecast
-The 24-hour curve is a **modelled diurnal shape** anchored to the current estimate, not a measured hourly station feed. See [Data Sources & Limitations](#-data-sources--limitations).
+### Live 6-Pollutant Forecast & Offline Note
+When running live (`DEMO_MODE=false`), Open-Meteo supplies real-time hourly 6-pollutant telemetry (`pm2_5`, `pm10`, `no2`, `so2`, `co`, `o3`) from which per-hour CPCB sub-indices and Safe Windows are computed directly. When offline or in `DEMO_MODE=true`, the 24-hour curve uses a **modelled diurnal shape** calibrated to each city. See [Data Sources & Limitations](#-data-sources--limitations).
 
 ---
 
@@ -205,25 +205,30 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── school.py            # GET  /api/school/guidance (Campus protocols)
 │   │   │   └── community.py         # GET  /api/community/* (Leaderboard & challenges)
 │   │   ├── services/
-│   │   │   ├── air_quality.py       # CPCB NAQI math, Open-Meteo client, diurnal forecast
+│   │   │   ├── air_quality.py       # Modular facade over CPCB, diurnal forecaster & Open-Meteo client
+│   │   │   ├── cpcb_math.py         # Pure deterministic CPCB NAQI sub-index & category calculations
+│   │   │   ├── diurnal_forecaster.py# 6-pollutant hourly Open-Meteo parser & safe window derivation
+│   │   │   ├── open_meteo_client.py # Async Open-Meteo 6-pollutant + weather client & TTL cache
 │   │   │   ├── geocoding.py         # 30+ pre-calibrated Indian cities & geocoding
 │   │   │   ├── impact.py            # Mathematical exposure, CO2, and INR calculator
 │   │   │   ├── rag.py               # Path-safe knowledge base retrieval & document indexing
 │   │   │   ├── safety.py            # Medical disclaimer & asthma safety rules
 │   │   │   └── llm/                 # Gemini (prompt-bounded, GEMINI_MODEL) & Demo providers
-│   │   ├── models/schemas.py        # Strict Pydantic v2 models (extra="forbid", Unicode city sanitizer)
-│   │   └── knowledge_base/          # Curated evidence-based environmental health guides
-│   ├── config/                      # emission_factors.json, exposure_assumptions.json
-│   ├── pyproject.toml               # Ruff & Black configuration
-│   ├── tests/                       # Pytest suite (74 tests across routers, services, security, guardrails & parity)
+│   │   └── models/schemas.py        # Strict Pydantic v2 models (extra="forbid", Unicode city sanitizer)
+│   ├── knowledge_base/              # Curated evidence-based environmental health guides
+│   ├── config/                      # emission_factors.json, exposure_assumptions.json, plan_templates.json
+│   ├── pyproject.toml               # Ruff (C901 complexity + S security), Black & Mypy --strict config
+│   ├── tests/                       # Pytest suite (76 tests across routers, services, security, guardrails & parity)
 │   └── requirements.txt             # Python dependencies
 ├── frontend/
+│   ├── e2e/                         # Playwright E2E + Axe WCAG 2.1 AA core flow spec
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── layout.tsx           # Root HTML layout with skip-to-content anchor
-│   │   │   ├── page.tsx             # Modular dashboard shell (<250 lines) with custom hooks
+│   │   │   ├── page.tsx             # Modular dashboard shell (<300 lines) with custom hooks
 │   │   │   ├── globals.css          # Tailwind directives
-│   │   │   └── api/                 # Next.js Serverless API routes (aqi, chat, plan, community)
+│   │   │   └── api/                 # Next.js Serverless API routes (live Open-Meteo & Gemini w/ fallback)
+│   │   ├── data/                    # Externalized JSON configs (cities.json, locales.json, emissionFactors.json)
 │   │   ├── components/
 │   │   │   ├── dashboard/           # DashboardTabs with ARIA Left/Right/Home/End key navigation
 │   │   │   ├── Navbar.tsx           # Top navigation shell
@@ -233,33 +238,37 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── risk-meter/          # Decomposed sub-components (AQIBandScale, PollutantGrid)
 │   │   │   ├── SafeWindows.tsx      # Diurnal safe window cards with thermal mixing rationale
 │   │   │   ├── ForecastChart.tsx    # 24-hr CPCB AQI diurnal chart with 2h tick intervals
-│   │   │   ├── PlanCard.tsx         # 3-section daily action plan
-│   │   │   ├── ImpactBar.tsx        # Before vs. After exposure & savings bar
+│   │   │   ├── PlanCard.tsx         # Interactive Direct Impact 3-section daily action plan
+│   │   │   ├── ImpactBar.tsx        # Live before vs. after exposure & savings simulator bar
 │   │   │   ├── ChatAssistant.tsx    # Conversational GenAI assistant
 │   │   │   ├── HouseholdSelector.tsx# Profile card shell
-│   │   │   ├── household/           # MemberSensitivityList & CommuteHomeSettings fieldsets
+│   │   │   ├── household/           # MemberSensitivityList, CommuteHomeSettings & accessible HouseholdModal
 │   │   │   ├── SchoolView.tsx       # Campus advisory protocol dashboard
 │   │   │   ├── CommunityView.tsx    # Neighborhood challenges & leaderboard shell
 │   │   │   └── community/           # ChallengeCard & accessible LeaderboardTable
 │   │   ├── hooks/                   # Extracted state hooks with race-condition guards
 │   │   ├── lib/
 │   │   │   ├── cpcb.ts              # Mathematical CPCB NAQI calculation engine
-│   │   │   ├── cities.ts            # Indian city directory & metro classifications
-│   │   │   ├── presetPlan.ts        # Pre-calibrated plans for instant offline fallback
+│   │   │   ├── cities.ts            # Typed loader over data/cities.json
+│   │   │   ├── impactSimulator.ts   # Cross-stack synced & interactive Direct Impact calculator
+│   │   │   ├── presetPlan.ts        # Pre-calibrated plans & mandatory safety cautions
 │   │   │   ├── communityData.ts     # Neighborhood challenges and leaderboard state
 │   │   │   ├── feedback.ts          # Audio/haptic interaction feedback utility
 │   │   │   ├── sanitize.ts          # Unicode-safe city & chat input sanitization
 │   │   │   ├── logger.ts            # Environment-aware client logging utility
 │   │   │   ├── initialData.ts       # Backward-compatible barrel re-export
 │   │   │   ├── api.ts               # Sanitized AbortController-timeout API client
-│   │   │   └── i18n.ts              # English, Hindi, Telugu, Tamil translations
-│   │   └── __tests__/               # Vitest suite (49 tests: app, a11y, cpcbBreakpoints, cpcbParity, i18n, routes)
+│   │   │   └── i18n.ts              # Typed loader over data/locales.json (EN, HI, TE, TA)
+│   │   └── __tests__/               # Vitest suite (59 tests across app, a11y, parity, routes; 97% coverage)
 │   ├── next.config.js               # OWASP CSP headers & conditional INTERNAL_API_URL proxy
+│   ├── playwright.config.ts         # Playwright Chromium configuration
+│   ├── tsconfig.json                # Strict TS (noUncheckedIndexedAccess + noUnusedLocals)
 │   ├── package.json                 # Next.js 14 & dependencies
 │   └── tailwind.config.js           # Tailwind CSS configuration
 ├── tests/
 │   └── fixtures/
-│       └── cpcb_cases.json          # Shared golden dataset for cross-stack CPCB verification
+│       ├── cpcb_cases.json          # Shared golden dataset for cross-stack CPCB verification
+│       └── plan_impact_cases.json   # Shared golden dataset for cross-stack impact & safety parity
 ├── scripts/                         # Portable environment-independent utility scripts
 ├── docs/assets/
 │   ├── dashboard.png                # Desktop dashboard screenshot
@@ -472,21 +481,25 @@ Under official Indian Central Pollution Control Board reporting conventions, amb
 
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **123 automated tests** (74 backend, 49 frontend) integrated into GitHub Actions, with `tsc --noEmit`, ruff, black, ESLint, and Next.js production build verification:
+BreatheWise maintains **135 unit & integration tests** (76 backend at 94% coverage, 59 frontend at 97% library/API coverage) plus an end-to-end Playwright + Axe accessibility spec integrated into GitHub Actions:
 
 ```bash
-# Frontend Tests (Vitest — 49 passed)
+# Frontend Tests & Coverage (Vitest — 59 passed)
 cd frontend
-npm test -- --run
+npm test -- --run --coverage
 
-# Backend Tests (Pytest with Coverage — 74 passed)
-python -m pytest backend/tests -v
+# Frontend E2E & Axe Accessibility (Playwright)
+npm run build && npm run test:e2e
+
+# Backend Tests & Strict Type/SAST Checks (Pytest — 76 passed)
+cd backend
+python -m mypy --strict app/ && python -m bandit -r app/ -ll && python -m pytest -v --cov=app --cov-fail-under=90 tests/
 ```
 
 ### GitHub Actions CI Workflow (`.github/workflows/ci.yml`)
-- **`frontend-ci`**: Node 20 environment, dependency caching, `tsc --noEmit`, ESLint, Vitest execution, and production build verification.
-- **`backend-ci`**: Python 3.11 environment, ruff and black checks, then Pytest with coverage across schemas, safety rules, security middleware, LLM-provider fallbacks, and CPCB algorithms.
-- **`security-audit`**: Automated secret scanning ensuring zero credentials exist in version control.
+- **`frontend-ci`**: Node 20, strict `npm ci`, `tsc --noEmit` (`noUncheckedIndexedAccess` + `noUnusedLocals`), ESLint, Vitest (`85%+` coverage floor), Next.js production build, and Playwright + `@axe-core/playwright` E2E verification.
+- **`backend-ci`**: Python 3.11, Ruff (`C901` complexity + `S` security rules), Black formatting, `mypy --strict app/`, `bandit -r app/ -ll` SAST, `pip-audit`, and Pytest (`90%+` coverage floor).
+- **`security-audit`**: Automated secret scanning (`gitleaks` + regex check) ensuring zero credentials exist in version control.
 
 ---
 
@@ -508,7 +521,7 @@ BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURIT
 - **Sliding-Window Rate Limiting**: Enforces a 120 requests/minute ceiling per client IP (Redis-backed when `REDIS_URL` is configured, with automatic in-memory deque fallback) and `429 Too Many Requests` responses.
 - **Multi-Lingual Input Sanitization & Prompt Hardening**: City parameters sanitize via `/[^\p{L}\p{M}\p{N}\s()\-.]/gu` and Python `unicodedata` (`L*`/`M*`/`N*`), preserving Latin, Devanagari, Telugu, and Tamil characters while neutralizing XSS. Chat payloads strip control chars, cap at 1,000 chars, reject extra Pydantic fields (`extra="forbid"`), and isolate queries inside `<user_query>` delimiters.
 - **Stack Trace Suppression & Prod Docs Gate**: Generic 500 error handler prevents exposure of internal exception traces, and Swagger `/docs` disables when `APP_ENV=production`.
-- **Zero Committed Secrets**: `.env.example` template provided; offline simulation operates seamlessly without requiring external credentials.
+- **Knowledge Base Grounding**: Dedicated environmental health reference guides live in `backend/knowledge_base/*.md`, indexed safely with path-traversal validation (`is_relative_to`) in [rag.py](backend/app/services/rag.py).
 
 ---
 

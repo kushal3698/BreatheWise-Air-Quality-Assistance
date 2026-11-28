@@ -61,7 +61,7 @@ export function CitySearchAutocomplete({
           type="submit"
           aria-label="Submit city search"
           title="Search city"
-          className={`w-4 h-4 text-slate-400 hover:text-emerald-600 absolute ${
+          className={`w-4 h-4 text-slate-600 hover:text-emerald-700 absolute ${
             isMobile ? 'left-2.5 top-2.5' : 'left-2 top-2'
           } cursor-pointer flex items-center justify-center p-0 border-none bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded`}
         >
@@ -77,7 +77,7 @@ export function CitySearchAutocomplete({
             }}
             className={`absolute ${
               isMobile ? 'right-2.5 top-2.5' : 'right-2 top-2'
-            } text-slate-400 hover:text-slate-600 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded`}
+            } text-slate-600 hover:text-slate-800 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded`}
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
@@ -86,7 +86,7 @@ export function CitySearchAutocomplete({
 
       {searchDropdownOpen && filteredCities.length > 0 && (
         <div className={dropdownClass}>
-          <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
             Instant City Matches
           </div>
           {filteredCities.map((item) => (
@@ -100,7 +100,7 @@ export function CitySearchAutocomplete({
             >
               <div>
                 <span className="font-bold text-xs text-slate-800 group-hover:text-emerald-700">{item.name}</span>
-                <span className="text-[10px] text-slate-400 ml-1.5">({item.state})</span>
+                <span className="text-[10px] text-slate-600 ml-1.5">({item.state})</span>
               </div>
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full"

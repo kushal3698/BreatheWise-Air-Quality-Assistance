@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class OpenAICompatLLMProvider(BaseLLMProvider):
     """OpenAI-compatible provider. Plans may come from the model; chat replies are rule-based."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.demo = DemoLLMProvider()
 
     async def generate_plan(

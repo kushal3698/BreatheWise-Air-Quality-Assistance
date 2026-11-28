@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { School, AlertTriangle, ShieldCheck, Activity, Users, Bell, Bus, CheckCircle } from 'lucide-react';
+import { School, ShieldCheck, Activity, Users, Bell, Bus } from 'lucide-react';
 import { fetchSchoolGuidance, SchoolGuidance } from '@/lib/api';
 import { getCityPresetAQI } from '@/lib/initialData';
 

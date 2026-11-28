@@ -93,7 +93,7 @@ export function Navbar({
                     onClick={() => handleCitySelect(c)}
                     className={`px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                       isSelected
-                        ? 'bg-emerald-600 text-white font-bold shadow-md scale-105 ring-2 ring-emerald-400 ring-offset-1'
+                        ? 'bg-emerald-700 text-white font-bold shadow-md scale-105 ring-2 ring-emerald-400 ring-offset-1'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 active:scale-95'
                     }`}
                   >

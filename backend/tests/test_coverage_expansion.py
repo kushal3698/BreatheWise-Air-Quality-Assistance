@@ -296,16 +296,21 @@ def test_build_hourly_forecast():
     res_empty = _build_hourly_forecast({}, default_pm25=40.0, default_pm10=80.0)
     assert res_empty == []
 
-    # Valid times with some nulls
+    # Valid times with some nulls and secondary gaseous pollutants (O3 dominant in afternoon)
     hourly_mock = {
         "time": ["2026-11-27T00:00", "2026-11-27T02:00", "2026-11-27T04:00"],
-        "pm2_5": [50.0, None, 80.0],
-        "pm10": [100.0, 120.0, None],
+        "pm2_5": [50.0, None, 20.0],
+        "pm10": [100.0, 120.0, 40.0],
+        "nitrogen_dioxide": [30.0, 35.0, 45.0],
+        "sulphur_dioxide": [8.0, 10.0, 12.0],
+        "carbon_monoxide": [900.0, 1000.0, 1100.0],
+        "ozone": [25.0, 30.0, 168.0],  # 168 ug/m3 O3 -> CPCB sub-index 200 (dominates PM2.5=20)
     }
     res = _build_hourly_forecast(hourly_mock, default_pm25=30.0, default_pm10=60.0)
     assert len(res) == 2  # Step of 2 across 3 elements => index 0 and 2
     assert res[0]["hour"] == "00:00"
     assert res[1]["hour"] == "04:00"
+    assert res[1]["aqi"] == 200  # Multi-pollutant sub-index picks ozone=200 over pm2.5=33
 
 
 def test_assemble_live_payload():
@@ -363,7 +368,7 @@ async def test_fetch_air_quality_cache_and_demo(monkeypatch):
     mock_aq = {"current": {"pm2_5": 60.0, "pm10": 110.0}, "hourly": {}}
     mock_w = {"current": {"temperature_2m": 25.0, "relative_humidity_2m": 50, "wind_speed_10m": 10.0}}
 
-    with patch("app.services.air_quality._fetch_open_meteo_raw", new_callable=AsyncMock) as mock_fetch:
+    with patch("app.services.open_meteo_client._fetch_open_meteo_raw", new_callable=AsyncMock) as mock_fetch:
         mock_fetch.return_value = (mock_aq, mock_w)
         first_call = await fetch_air_quality("Pune")
         assert first_call["location"]["name"] == "Pune"

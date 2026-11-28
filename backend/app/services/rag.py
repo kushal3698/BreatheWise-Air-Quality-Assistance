@@ -1,9 +1,12 @@
+import logging
 import math
 import re
 from pathlib import Path
 from typing import Any, Dict, List
 
 from app.config import settings
+
+logger = logging.getLogger("breathewise.rag")
 
 
 class RAGDocumentChunk:
@@ -89,7 +92,8 @@ class KnowledgeBaseRetriever:
                         self.chunks.append(
                             RAGDocumentChunk(source=f"kb/{file.name}", title=sec_title, content=sec_content)
                         )
-            except Exception:
+            except Exception as exc:
+                logger.warning("Skipping unreadable KB document %s: %s", file.name, type(exc).__name__)
                 continue
 
     def retrieve(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:

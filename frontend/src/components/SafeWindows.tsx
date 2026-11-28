@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Clock, Sun, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Clock, Sun, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { SafeWindow } from '@/lib/api';
 
 interface SafeWindowsProps {

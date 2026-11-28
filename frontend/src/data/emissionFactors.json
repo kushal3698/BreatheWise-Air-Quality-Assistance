@@ -1,0 +1,31 @@
+{
+  "emission_factors_kg_co2_per_km": {
+    "petrol_car": 0.170,
+    "diesel_car": 0.171,
+    "cng_car": 0.135,
+    "ev_car": 0.045,
+    "petrol_twowheeler": 0.042,
+    "ev_twowheeler": 0.015,
+    "autorickshaw": 0.065,
+    "bus": 0.022,
+    "metro": 0.014,
+    "carpool": 0.057,
+    "bicycle": 0.000,
+    "walking": 0.000
+  },
+  "cost_inr_per_km": {
+    "petrol_car": 9.50,
+    "diesel_car": 8.00,
+    "cng_car": 4.50,
+    "ev_car": 2.00,
+    "petrol_twowheeler": 2.50,
+    "ev_twowheeler": 0.60,
+    "autorickshaw": 15.00,
+    "bus": 1.50,
+    "metro": 2.20,
+    "carpool": 3.20,
+    "bicycle": 0.00,
+    "walking": 0.00
+  },
+  "pm25_cigarette_equivalent_ugm3": 22.0
+}
