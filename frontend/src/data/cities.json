@@ -230,9 +230,9 @@
         {
           "start": "13:00",
           "end": "16:30",
-          "avg_aqi": 88,
+          "avg_aqi": 64,
           "category": "Satisfactory",
-          "guidance": "Lowest forecast AQI today (~88) during peak afternoon thermal mixing and coastal breeze."
+          "guidance": "Lowest forecast AQI today (~64) during peak afternoon thermal mixing and coastal breeze."
         }
       ],
       "source": "open-meteo / CPCB",
@@ -755,9 +755,9 @@
         {
           "start": "13:30",
           "end": "16:30",
-          "avg_aqi": 68,
+          "avg_aqi": 51,
           "category": "Satisfactory",
-          "guidance": "Lowest forecast AQI today (~68) during peak afternoon sea breeze dispersion."
+          "guidance": "Lowest forecast AQI today (~51) during peak afternoon sea breeze dispersion."
         }
       ],
       "source": "open-meteo / CPCB",
@@ -1385,7 +1385,7 @@
         {
           "start": "13:00",
           "end": "17:00",
-          "avg_aqi": 100,
+          "avg_aqi": 58,
           "category": "Satisfactory",
           "guidance": "Optimal afternoon airflow across river valley; safe for normal routines."
         }
@@ -1490,8 +1490,8 @@
         {
           "start": "06:00",
           "end": "10:30",
-          "avg_aqi": 82,
-          "category": "Satisfactory",
+          "avg_aqi": 50,
+          "category": "Good",
           "guidance": "Beachfront morning air is fresh and ideal for cardio."
         },
         {
@@ -1707,9 +1707,9 @@
         {
           "start": "13:00",
           "end": "16:30",
-          "avg_aqi": 84,
+          "avg_aqi": 62,
           "category": "Satisfactory",
-          "guidance": "Lowest forecast AQI today (~84) during peak afternoon thermal mixing."
+          "guidance": "Lowest forecast AQI today (~62) during peak afternoon thermal mixing."
         }
       ],
       "source": "open-meteo / CPCB",
@@ -1812,9 +1812,9 @@
         {
           "start": "13:00",
           "end": "16:30",
-          "avg_aqi": 42,
+          "avg_aqi": 32,
           "category": "Good",
-          "guidance": "Lowest forecast AQI today (~42) during peak sea breeze."
+          "guidance": "Lowest forecast AQI today (~32) during peak sea breeze."
         }
       ],
       "source": "open-meteo / CPCB",

@@ -13,7 +13,9 @@ export function generateLocalChatReply(
   const cat = aqiData.current.category;
   const firstSafeWindow = aqiData.safe_windows?.[0];
   const safeWindowStr = firstSafeWindow
-    ? `${firstSafeWindow.start} to ${firstSafeWindow.end} (AQI drops to ~${firstSafeWindow.avg_aqi})`
+    ? firstSafeWindow.avg_aqi < aqi
+      ? `${firstSafeWindow.start} to ${firstSafeWindow.end} (AQI drops to ~${firstSafeWindow.avg_aqi})`
+      : `${firstSafeWindow.start} to ${firstSafeWindow.end} (avg AQI ~${firstSafeWindow.avg_aqi})`
     : '13:00 to 16:00 (peak afternoon solar convection)';
 
   const hasAsthma = household?.members?.some(m => m.sensitivities?.includes('asthma')) || false;
@@ -51,7 +53,7 @@ export function generateLocalChatReply(
 ${peakCaution}
 
 **Direct Recommendation for Outdoor Play / Exercise:**
-- **At 4:00 PM:** Ambient pollution begins rising toward the evening traffic and temperature inversion peak (forecast AQI: ~220–260 in ${city}). It is **not recommended** for an 8-year-old child to engage in strenuous outdoor play (running, soccer, intense cardio) at this time.
+- **At 4:00 PM:** Ambient pollution begins rising toward the evening traffic and temperature inversion peak (forecast AQI: ~${Math.round(aqi * 1.1)}–${Math.min(500, Math.round(aqi * 1.25))} in ${city}). It is **not recommended** for an 8-year-old child to engage in strenuous outdoor play (running, soccer, intense cardio) at this time.
 - **Why Children are More Vulnerable:** Children breathe up to 50% more air per kilogram of body weight compared to adults, and their narrower airways and developing lung alveoli absorb higher doses of ultra-fine particulate (PM2.5).
 - **Best Window Today:** The safest daytime window for outdoor activities today was **${safeWindowStr}**, when ground-level thermal mixing is highest.
 - **Actionable Alternative:** Shift energetic play indoors today. Set up an indoor obstacle course, active games, or reading until ambient air improves. If outdoor presence is necessary, limit to low-exertion walking (<20 mins) with a snug child-sized N95 mask.

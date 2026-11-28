@@ -165,14 +165,48 @@ describe('Frontend API Client, Local Chat Engine, and Live Route Branches', () =
     const chatData = await chatRes.json();
     expect(chatData.reply).toBe('Gemini chat advice');
 
+    // Fallback from primary 429 to secondary Gemini Flash model while stripping thought parts
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('quota', { status: 429 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    { thought: true, text: 'internal reasoning' },
+                    { text: 'Live **Lite** Advice' },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      ) as typeof fetch;
+
+    const retryRes = await postChat(
+      new NextRequest('http://localhost:3000/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message: 'chatassistant', city: 'Guntur', language: 'en' }),
+      })
+    );
+    const retryData = await retryRes.json();
+    expect(retryData.reply).toBe('Live **Lite** Advice');
+
     // Graceful fallback when Gemini throws network error
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network down')) as typeof fetch;
     const chatFallbackRes = await postChat(
       new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
-        body: JSON.stringify({ message: 'mask?', city: 'Delhi', language: 'en' }),
+        body: JSON.stringify({ message: 'chatassistant', city: 'Guntur', language: 'en' }),
       })
     );
     expect(chatFallbackRes.status).toBe(200);
+    const fallbackData = await chatFallbackRes.json();
+    expect(fallbackData.reply).toContain('Current CPCB AQI: 85');
+    expect(fallbackData.reply).not.toContain('drops to ~88');
   });
 });

@@ -23,6 +23,38 @@ def _headers() -> Dict[str, str]:
     return {"x-goog-api-key": settings.gemini_api_key, "Content-Type": "application/json"}
 
 
+def _extract_candidate_text(data: Dict[str, Any]) -> str:
+    """Extract non-thought text content from Gemini response candidates."""
+    candidates = data.get("candidates", [])
+    if not candidates:
+        return ""
+    parts = candidates[0].get("content", {}).get("parts", [])
+    return "".join(
+        str(part.get("text", "")) for part in parts if isinstance(part, dict) and not part.get("thought")
+    ).strip()
+
+
+async def _post_gemini_generate(payload: Dict[str, Any], timeout: float = 16.0) -> Optional[Dict[str, Any]]:
+    """Invoke Gemini REST API with automatic Flash fallback on quota/timeout."""
+    candidates = list(dict.fromkeys([settings.gemini_model, "gemini-3.5-flash-lite", "gemini-3.8-flash"]))
+    for candidate_model in candidates:
+        url = GEMINI_ENDPOINT.format(model=candidate_model)
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                res = await client.post(url, json=payload, headers=_headers())
+            if res.status_code == 200:
+                return dict(res.json())
+            logger.warning("Gemini request (%s) returned HTTP %s.", candidate_model, res.status_code)
+            if res.status_code not in (429, 404, 503):
+                break
+        except httpx.TimeoutException as exc:
+            logger.warning("Gemini request (%s) timed out (%s).", candidate_model, type(exc).__name__)
+        except Exception as exc:
+            logger.warning("Gemini call failed (%s).", type(exc).__name__)
+            break
+    return None
+
+
 class GeminiLLMProvider(BaseLLMProvider):
     """
     Gemini API integration (configurable via GEMINI_MODEL).
@@ -76,19 +108,15 @@ Respond ONLY with valid JSON matching the DailyPlan schema.
                 "contents": [{"parts": [{"text": f"{system_instruction}\n\n{user_prompt}"}]}],
                 "generationConfig": {"responseMimeType": "application/json", "temperature": 0.3},
             }
-            async with httpx.AsyncClient(timeout=20.0) as client:
-                res = await client.post(_endpoint(), json=payload, headers=_headers())
-            if res.status_code == 200:
-                candidates = res.json().get("candidates", [])
-                if candidates:
-                    parsed = json.loads(candidates[0]["content"]["parts"][0]["text"])
-                    parsed["impact_summary"] = demo_plan["impact_summary"]
-                    # Reject malformed model output instead of returning a broken response
-                    return DailyPlanResponse(**parsed).model_dump()
-            else:
-                logger.warning("Gemini plan request returned HTTP %s; using rule-based plan.", res.status_code)
+            data = await _post_gemini_generate(payload, timeout=18.0)
+            raw_text = _extract_candidate_text(data) if data else ""
+            if raw_text:
+                parsed = json.loads(raw_text)
+                parsed["impact_summary"] = demo_plan["impact_summary"]
+                # Reject malformed model output instead of returning a broken response
+                return DailyPlanResponse(**parsed).model_dump()
         except Exception as exc:
-            logger.warning("Gemini plan call failed (%s); using rule-based plan.", type(exc).__name__)
+            logger.warning("Gemini plan parsing failed (%s); using rule-based plan.", type(exc).__name__)
 
         return demo_plan
 
@@ -126,24 +154,19 @@ Never diagnose illness. Include medical safety caution if high AQI or asthma. Us
 """
         try:
             payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.4}}
-            async with httpx.AsyncClient(timeout=20.0) as client:
-                res = await client.post(_endpoint(), json=payload, headers=_headers())
-            if res.status_code == 200:
-                candidates = res.json().get("candidates", [])
-                if candidates:
-                    reply_text = candidates[0]["content"]["parts"][0]["text"]
-                    demo_chat = await self.demo.generate_chat_reply(
-                        message, city, aqi_data, household, rag_context, language, history
-                    )
-                    return {
-                        "reply": reply_text,
-                        "grounded_sources": [c["source"] for c in rag_context][:3] or demo_chat["grounded_sources"],
-                        "suggested_questions": demo_chat["suggested_questions"],
-                        "safe_window_summary": demo_chat["safe_window_summary"],
-                        "disclaimer": demo_chat["disclaimer"],
-                    }
-            else:
-                logger.warning("Gemini chat request returned HTTP %s; using rule-based reply.", res.status_code)
+            data = await _post_gemini_generate(payload, timeout=16.0)
+            reply_text = _extract_candidate_text(data) if data else ""
+            if reply_text:
+                demo_chat = await self.demo.generate_chat_reply(
+                    message, city, aqi_data, household, rag_context, language, history
+                )
+                return {
+                    "reply": reply_text,
+                    "grounded_sources": [c["source"] for c in rag_context][:3] or demo_chat["grounded_sources"],
+                    "suggested_questions": demo_chat["suggested_questions"],
+                    "safe_window_summary": demo_chat["safe_window_summary"],
+                    "disclaimer": demo_chat["disclaimer"],
+                }
         except Exception as exc:
             logger.warning("Gemini chat call failed (%s); using rule-based reply.", type(exc).__name__)
 

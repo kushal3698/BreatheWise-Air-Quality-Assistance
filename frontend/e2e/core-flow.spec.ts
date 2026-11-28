@@ -62,9 +62,12 @@ test.describe('BreatheWise Core E2E Flow & Accessibility Audit', () => {
     await page.getByRole('button', { name: 'Send chat message' }).click();
 
     await expect(page.locator('#panel-chat')).toContainText('Should my 8-year-old play outside at 4 PM?');
-    await expect(page.locator('#panel-chat .rounded-tl-none').nth(1)).toContainText(/indoor|window|aqi|pm2\.5|air/i, {
+    const assistantReply = page.locator('#panel-chat .rounded-tl-none').nth(1);
+    await expect(assistantReply).toContainText(/indoor|window|aqi|pm2\.5|air/i, {
       timeout: 10000,
     });
+    await expect(assistantReply.locator('strong').first()).toBeVisible();
+    await expect(assistantReply).not.toContainText('**');
     await expect(page.locator('footer')).toContainText(/not medical advice|decision-support/i);
   });
 });

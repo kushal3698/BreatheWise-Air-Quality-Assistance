@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Send, Bot, User, Sparkles, BookOpen } from 'lucide-react';
 import { sendChatMessage, ChatMessage, HouseholdProfile } from '@/lib/api';
 import { logger } from '@/lib/logger';
@@ -108,11 +110,45 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ city, language, ho
             <div
               className={`rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                 m.role === 'user'
-                  ? 'bg-emerald-700 text-white rounded-tr-none'
-                  : 'bg-slate-50 text-slate-800 border border-slate-200/80 rounded-tl-none whitespace-pre-wrap'
+                  ? 'bg-emerald-700 text-white rounded-tr-none whitespace-pre-wrap'
+                  : 'bg-slate-50 text-slate-800 border border-slate-200/80 rounded-tl-none'
               }`}
             >
-              {m.content}
+              {m.role === 'user' ? (
+                m.content
+              ) : (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                    strong: ({ children }) => <strong className="font-bold text-slate-900">{children}</strong>,
+                    em: ({ children }) => <em className="italic text-slate-700">{children}</em>,
+                    ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1 last:mb-0">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-1 last:mb-0">{children}</ol>,
+                    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                    h1: ({ children }) => <h4 className="font-bold text-slate-900 text-sm mb-1.5">{children}</h4>,
+                    h2: ({ children }) => <h4 className="font-bold text-slate-900 text-sm mb-1.5">{children}</h4>,
+                    h3: ({ children }) => (
+                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide mt-2 mb-1">{children}</h4>
+                    ),
+                    code: ({ children }) => (
+                      <code className="px-1 py-0.5 rounded bg-slate-200/70 text-slate-900 font-mono text-[11px]">
+                        {children}
+                      </code>
+                    ),
+                    table: ({ children }) => (
+                      <div className="overflow-x-auto my-2 rounded-lg border border-slate-200">
+                        <table className="w-full text-left border-collapse text-[11px]">{children}</table>
+                      </div>
+                    ),
+                    thead: ({ children }) => <thead className="bg-slate-100 text-slate-800">{children}</thead>,
+                    th: ({ children }) => <th className="px-2.5 py-1.5 font-semibold border-b border-slate-200">{children}</th>,
+                    td: ({ children }) => <td className="px-2.5 py-1.5 border-t border-slate-200/80">{children}</td>,
+                  }}
+                >
+                  {m.content}
+                </ReactMarkdown>
+              )}
             </div>
           </div>
         ))}

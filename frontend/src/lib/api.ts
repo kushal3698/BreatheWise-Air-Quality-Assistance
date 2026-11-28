@@ -207,7 +207,7 @@ export async function fetchDailyPlan(city: string, language: string, household?:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ city: safeCity, language, household }),
     },
-    22000
+    32000
   );
   if (!res.ok) throw new Error('Failed to generate daily plan');
   return res.json();
@@ -229,7 +229,7 @@ export async function sendChatMessage(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: safeMessage, city: safeCity, language, household, history }),
     },
-    22000
+    32000
   );
   if (!res.ok) throw new Error('Failed to communicate with BreatheWise assistant');
   return res.json();

@@ -4,7 +4,12 @@ import { sanitizeCity } from '@/lib/sanitize';
 import type { DailyPlan, HouseholdProfile } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 60;
+
+interface GeminiPart {
+  text?: string;
+  thought?: boolean;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,14 +27,14 @@ export async function POST(req: NextRequest) {
       ) ?? false;
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+    const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
     const demoMode = process.env.DEMO_MODE === 'true';
 
     if (!demoMode && apiKey && apiKey !== 'demo') {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 20000);
-      try {
-        const prompt = `You are BreatheWise, a non-medical urban air quality planner.
+      const candidateModels = Array.from(
+        new Set([primaryModel, 'gemini-3.5-flash-lite', 'gemini-3.8-flash'])
+      );
+      const prompt = `You are BreatheWise, a non-medical urban air quality planner.
 Respond ONLY with valid JSON matching:
 - summary: string
 - risk_level: "good" | "moderate" | "poor" | "very_poor" | "severe"
@@ -48,68 +53,90 @@ AQI Current: ${JSON.stringify(aqi.current)}
 Safe Windows: ${JSON.stringify(aqi.safe_windows)}
 Household: ${JSON.stringify(household || {})}`;
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-            body: JSON.stringify({
-              contents: [{ role: 'user', parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json', temperature: 0.3 },
-            }),
-            signal: controller.signal,
-          }
-        );
-        if (geminiRes.ok) {
-          const geminiData = (await geminiRes.json()) as {
-            candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      for (const candidateModel of candidateModels) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 16000);
+        try {
+          const generationConfig: Record<string, unknown> = {
+            responseMimeType: 'application/json',
+            temperature: 0.3,
           };
-          const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const parsed = JSON.parse(rawText) as Partial<DailyPlan>;
-            const validSections =
-              Array.isArray(parsed.sections?.low_emission_routines) &&
-              Array.isArray(parsed.sections?.indoor_air_hacks);
-            if (parsed.summary && validSections && parsed.sections) {
-              const mandatory = buildMandatoryCautions(aqi.current.aqi, city, aqi.current.aqi, hasAsthma);
-              const mergedCautions = [...mandatory];
-              for (const item of parsed.cautions ?? []) {
-                if (typeof item === 'string' && !mergedCautions.includes(item)) mergedCautions.push(item);
+          if (candidateModel.includes('3.5-flash') && !candidateModel.includes('lite')) {
+            generationConfig.thinkingConfig = { thinkingBudget: 128 };
+          }
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${candidateModel}:generateContent`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig,
+              }),
+              signal: controller.signal,
+            }
+          );
+          if (geminiRes.ok) {
+            const geminiData = (await geminiRes.json()) as {
+              candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
+            };
+            const parts = geminiData.candidates?.[0]?.content?.parts ?? [];
+            const rawText = parts
+              .filter((p) => !p.thought && typeof p.text === 'string')
+              .map((p) => p.text)
+              .join('')
+              .trim();
+            if (rawText) {
+              const parsed = JSON.parse(rawText) as Partial<DailyPlan>;
+              const validSections =
+                Array.isArray(parsed.sections?.low_emission_routines) &&
+                Array.isArray(parsed.sections?.indoor_air_hacks);
+              if (parsed.summary && validSections && parsed.sections) {
+                const mandatory = buildMandatoryCautions(aqi.current.aqi, city, aqi.current.aqi, hasAsthma);
+                const mergedCautions = [...mandatory];
+                for (const item of parsed.cautions ?? []) {
+                  if (typeof item === 'string' && !mergedCautions.includes(item)) mergedCautions.push(item);
+                }
+                return NextResponse.json({
+                  summary: parsed.summary,
+                  risk_level: parsed.risk_level ?? baselinePlan.risk_level,
+                  sections: {
+                    low_emission_routines:
+                      parsed.sections.low_emission_routines.length > 0
+                        ? parsed.sections.low_emission_routines
+                        : baselinePlan.sections.low_emission_routines,
+                    indoor_air_hacks:
+                      parsed.sections.indoor_air_hacks.length > 0
+                        ? parsed.sections.indoor_air_hacks
+                        : baselinePlan.sections.indoor_air_hacks,
+                    sustainable_alternatives:
+                      Array.isArray(parsed.sections.sustainable_alternatives) &&
+                      parsed.sections.sustainable_alternatives.length > 0
+                        ? parsed.sections.sustainable_alternatives
+                        : baselinePlan.sections.sustainable_alternatives,
+                  },
+                  today_timeline:
+                    Array.isArray(parsed.today_timeline) && parsed.today_timeline.length > 0
+                      ? parsed.today_timeline
+                      : baselinePlan.today_timeline,
+                  // Deterministic engine figures ALWAYS override LLM estimates
+                  impact_summary: baselinePlan.impact_summary,
+                  cautions: mergedCautions,
+                  disclaimer: parsed.disclaimer || STANDARD_DISCLAIMER,
+                });
               }
-              return NextResponse.json({
-                summary: parsed.summary,
-                risk_level: parsed.risk_level ?? baselinePlan.risk_level,
-                sections: {
-                  low_emission_routines:
-                    parsed.sections.low_emission_routines.length > 0
-                      ? parsed.sections.low_emission_routines
-                      : baselinePlan.sections.low_emission_routines,
-                  indoor_air_hacks:
-                    parsed.sections.indoor_air_hacks.length > 0
-                      ? parsed.sections.indoor_air_hacks
-                      : baselinePlan.sections.indoor_air_hacks,
-                  sustainable_alternatives:
-                    Array.isArray(parsed.sections.sustainable_alternatives) &&
-                    parsed.sections.sustainable_alternatives.length > 0
-                      ? parsed.sections.sustainable_alternatives
-                      : baselinePlan.sections.sustainable_alternatives,
-                },
-                today_timeline:
-                  Array.isArray(parsed.today_timeline) && parsed.today_timeline.length > 0
-                    ? parsed.today_timeline
-                    : baselinePlan.today_timeline,
-                // Deterministic engine figures ALWAYS override LLM estimates
-                impact_summary: baselinePlan.impact_summary,
-                cautions: mergedCautions,
-                disclaimer: parsed.disclaimer || STANDARD_DISCLAIMER,
-              });
             }
           }
+          if (![429, 404, 503].includes(geminiRes.status)) {
+            break;
+          }
+        } catch (err) {
+          if (err instanceof Error && err.name !== 'AbortError') {
+            break;
+          }
+        } finally {
+          clearTimeout(timer);
         }
-      } catch {
-        // Fall through to deterministic plan on Gemini timeout or malformed output
-      } finally {
-        clearTimeout(timer);
       }
     }
 
