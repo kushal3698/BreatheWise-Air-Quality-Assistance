@@ -67,9 +67,10 @@ def test_security_headers_and_rate_limiting():
     response = client.get("/")
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
-    assert response.headers["X-XSS-Protection"] == "1; mode=block"
+    assert "X-XSS-Protection" not in response.headers
     assert response.headers["Permissions-Policy"] == "camera=(), microphone=(), geolocation=()"
-    assert response.headers["Content-Security-Policy"] == "default-src 'self'"
+    assert response.headers["Content-Security-Policy"] == "default-src 'self'; frame-ancestors 'none'"
+    assert "Strict-Transport-Security" in response.headers
     assert "X-RateLimit-Limit" in response.headers
     assert "X-RateLimit-Remaining" in response.headers
 

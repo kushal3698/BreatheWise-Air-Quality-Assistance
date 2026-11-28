@@ -58,19 +58,23 @@ class KnowledgeBaseRetriever:
     """
 
     def __init__(self, kb_path: Path) -> None:
-        self.kb_path = kb_path
+        self.kb_path = kb_path.resolve()
         self.chunks: List[RAGDocumentChunk] = []
         self._load_knowledge_base()
 
     def _load_knowledge_base(self) -> None:
-        """Loads and parses markdown knowledge base files into section chunks."""
+        """Loads and parses markdown knowledge base files into section chunks safely within kb_path."""
         self.chunks.clear()
-        if not self.kb_path.exists():
+        if not self.kb_path.exists() or not self.kb_path.is_dir():
             return
 
-        for file in self.kb_path.glob("*.md"):
+        for file in sorted(self.kb_path.glob("*.md")):
             try:
-                text = file.read_text(encoding="utf-8")
+                resolved = file.resolve()
+                # Reject symlinks or path traversals resolving outside the knowledge base root
+                if not resolved.is_relative_to(self.kb_path):
+                    continue
+                text = resolved.read_text(encoding="utf-8")
                 # Split by ## markdown headers
                 sections = re.split(r"\n(?=##\s+)", text)
                 doc_title = file.stem.replace("_", " ").title()

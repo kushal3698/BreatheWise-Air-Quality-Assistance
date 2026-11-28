@@ -17,21 +17,37 @@ export function useAirQuality(initialCity = 'Delhi') {
   const [aqiData, setAqiData] = useState<AirQualityData>(DEFAULT_AQI_DATA);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [cityToast, setCityToast] = useState<CityToastInfo | null>(null);
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestSeqRef = useRef(0);
 
   useEffect(() => {
+    let active = true;
+    const reqId = ++requestSeqRef.current;
+
     fetchAQI(city)
-      .then(data => {
-        setAqiData(data);
-        setIsLiveConnected(true);
+      .then((data) => {
+        if (active && reqId === requestSeqRef.current) {
+          setAqiData(data);
+          setIsLiveConnected(true);
+        }
       })
       .catch(() => {
-        setIsLiveConnected(false);
+        if (active && reqId === requestSeqRef.current) {
+          setIsLiveConnected(false);
+        }
       });
+
+    return () => {
+      active = false;
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectCity = (cityName: string) => {
+    const reqId = ++requestSeqRef.current;
     setCity(cityName);
     const preset = getCityPresetAQI(cityName);
     setAqiData(preset);
@@ -44,7 +60,7 @@ export function useAirQuality(initialCity = 'Delhi') {
       aqi: preset.current.aqi,
       cat: preset.current.category,
       color: preset.current.cpcb_color,
-      safeWindow: safeWindowStr
+      safeWindow: safeWindowStr,
     });
 
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -53,12 +69,16 @@ export function useAirQuality(initialCity = 'Delhi') {
     }, 3200);
 
     fetchAQI(cityName)
-      .then(liveAQI => {
-        setAqiData(liveAQI);
-        setIsLiveConnected(true);
+      .then((liveAQI) => {
+        if (reqId === requestSeqRef.current) {
+          setAqiData(liveAQI);
+          setIsLiveConnected(true);
+        }
       })
       .catch(() => {
-        setIsLiveConnected(false);
+        if (reqId === requestSeqRef.current) {
+          setIsLiveConnected(false);
+        }
       });
   };
 
@@ -74,6 +94,6 @@ export function useAirQuality(initialCity = 'Delhi') {
     isLiveConnected,
     setIsLiveConnected,
     cityToast,
-    selectCity
+    selectCity,
   };
 }

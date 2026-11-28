@@ -1,39 +1,66 @@
+import unicodedata
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def sanitize_city_name(value: str) -> str:
+    """Sanitize city string while preserving Latin and Indic (Devanagari/Telugu/Tamil) letters and marks."""
+    kept = [ch for ch in value if unicodedata.category(ch).startswith(("L", "M", "N")) or ch in " ()-."]
+    cleaned = "".join(kept).strip()[:60]
+    if not cleaned:
+        raise ValueError("City name must contain valid characters.")
+    return cleaned
+
+
+def coerce_safe_city(value: str, fallback: str = "Delhi") -> str:
+    """Sanitize query city string, falling back cleanly when no valid characters remain."""
+    try:
+        return sanitize_city_name(value)
+    except ValueError:
+        return fallback
+
 
 # --- Household Models ---
 
 
 class HouseholdMember(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     id: Optional[str] = None
     role: str = Field(..., description="child | adult | elderly")
-    age: int
+    age: int = Field(ge=0, le=120)
     sensitivities: List[str] = Field(default_factory=list, description="e.g. asthma, allergies, hypertension")
 
 
 class TransportProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     mode: str = Field(
         default="petrol_car",
         description="petrol_car | diesel_car | ev_car | petrol_twowheeler | bus | metro | walking | bicycle",
     )
-    vehicles: int = Field(default=1)
-    school_run_km: float = Field(default=4.0)
-    commute_km: float = Field(default=15.0)
+    vehicles: int = Field(default=1, ge=0, le=20)
+    school_run_km: float = Field(default=4.0, ge=0.0, le=200.0)
+    commute_km: float = Field(default=15.0, ge=0.0, le=300.0)
 
 
 class HomeProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     type: str = Field(default="apartment", description="apartment | independent_house")
-    floor: int = Field(default=3)
+    floor: int = Field(default=3, ge=0, le=150)
     has_purifier: bool = Field(default=False)
     cooking_fuel: str = Field(default="LPG", description="LPG | induction | wood | piped_gas")
 
 
 class HouseholdProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     members: List[HouseholdMember] = Field(default_factory=list)
     transport: TransportProfile = Field(default_factory=TransportProfile)
     home: HomeProfile = Field(default_factory=HomeProfile)
-    work_from_home_days: int = Field(default=2)
+    work_from_home_days: int = Field(default=2, ge=0, le=7)
 
 
 # --- Air Quality Models ---
@@ -137,9 +164,16 @@ class ImpactSummary(BaseModel):
 
 
 class DailyPlanRequest(BaseModel):
-    city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[\w\s()\-.]+$")
+    model_config = ConfigDict(extra="forbid")
+
+    city: str = Field(default="Delhi", min_length=1, max_length=60)
     language: str = Field(default="en", pattern=r"^(en|hi|te|ta)$")
     household: Optional[HouseholdProfile] = None
+
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str) -> str:
+        return sanitize_city_name(value)
 
 
 class DailyPlanResponse(BaseModel):
@@ -161,13 +195,28 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     message: str = Field(
         ..., min_length=1, max_length=1000, description="User conversational query capped at 1000 characters"
     )
-    city: str = Field(default="Delhi", min_length=1, max_length=60, pattern=r"^[\w\s()\-.]+$")
+    city: str = Field(default="Delhi", min_length=1, max_length=60)
     language: str = Field(default="en", pattern=r"^(en|hi|te|ta)$")
     household: Optional[HouseholdProfile] = None
-    history: List[ChatMessage] = Field(default_factory=list)
+    history: List[ChatMessage] = Field(default_factory=list, max_length=20)
+
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str) -> str:
+        return sanitize_city_name(value)
+
+    @field_validator("message")
+    @classmethod
+    def sanitize_message(cls, value: str) -> str:
+        cleaned = "".join(ch for ch in value if ch >= " " or ch in "\n\t").strip()
+        if not cleaned:
+            raise ValueError("Chat message cannot be empty.")
+        return cleaned[:1000]
 
 
 class ChatResponse(BaseModel):

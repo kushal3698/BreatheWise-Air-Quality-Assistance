@@ -8,7 +8,7 @@
 
 [![CI / CD Pipeline](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/kushal3698/BreatheWise-Air-Quality-Assistance/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Production-Vercel%20Live-black?style=for-the-badge&logo=vercel&logoColor=white)](https://breathewise-air-quality-assistance.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Tests-115%20Passed-success?style=for-the-badge)](backend/tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-123%20Passed-success?style=for-the-badge)](backend/tests)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA--aligned-purple?style=for-the-badge)](frontend/src/__tests__/a11y.test.ts)
 [![Security](https://img.shields.io/badge/Security-Headers%20%2B%20Rate%20Limiting-red?style=for-the-badge)](SECURITY.md)
 
@@ -193,8 +193,10 @@ BreatheWise-Air-Quality-Assistance/
 │       └── ci.yml                   # Automated GitHub Actions CI (Frontend, Backend & Secret Scanning)
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                  # FastAPI app with HTTP security headers & rate limiting
-│   │   ├── config.py                # Pydantic BaseSettings, named constants & CORS origins
+│   │   ├── main.py                  # FastAPI wiring, CORS, global exception handler & prod docs gate
+│   │   ├── config.py                # Validated settings, Redis URL & KB path resolution
+│   │   ├── middleware/
+│   │   │   └── security.py          # OWASP headers, Server strip, Redis/memory sliding rate limiter
 │   │   ├── routers/
 │   │   │   ├── aqi.py               # GET  /api/aqi (CPCB telemetry & forecast)
 │   │   │   ├── plan.py              # POST /api/plan (Household daily action plan)
@@ -206,24 +208,26 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── air_quality.py       # CPCB NAQI math, Open-Meteo client, diurnal forecast
 │   │   │   ├── geocoding.py         # 30+ pre-calibrated Indian cities & geocoding
 │   │   │   ├── impact.py            # Mathematical exposure, CO2, and INR calculator
-│   │   │   ├── rag.py               # Knowledge base retrieval & document indexing
+│   │   │   ├── rag.py               # Path-safe knowledge base retrieval & document indexing
 │   │   │   ├── safety.py            # Medical disclaimer & asthma safety rules
-│   │   │   └── llm/                 # Gemini (configurable via GEMINI_MODEL) & Demo providers
-│   │   ├── models/schemas.py        # Pydantic validation models with input limits
+│   │   │   └── llm/                 # Gemini (prompt-bounded, GEMINI_MODEL) & Demo providers
+│   │   ├── models/schemas.py        # Strict Pydantic v2 models (extra="forbid", Unicode city sanitizer)
 │   │   └── knowledge_base/          # Curated evidence-based environmental health guides
 │   ├── config/                      # emission_factors.json, exposure_assumptions.json
 │   ├── pyproject.toml               # Ruff & Black configuration
-│   ├── tests/                       # Pytest suite (69 tests across routers, services, guardrails, and parity)
+│   ├── tests/                       # Pytest suite (74 tests across routers, services, security, guardrails & parity)
 │   └── requirements.txt             # Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── layout.tsx           # Root HTML layout with skip-to-content anchor
-│   │   │   ├── page.tsx             # Modular dashboard with custom hooks & ARIA tablist
+│   │   │   ├── page.tsx             # Modular dashboard shell (<250 lines) with custom hooks
 │   │   │   ├── globals.css          # Tailwind directives
-│   │   │   └── api/                 # Next.js Serverless API routes (aqi, chat, plan)
+│   │   │   └── api/                 # Next.js Serverless API routes (aqi, chat, plan, community)
 │   │   ├── components/
-│   │   │   ├── Navbar.tsx           # Extracted sticky top navigation & instant search
+│   │   │   ├── dashboard/           # DashboardTabs with ARIA Left/Right/Home/End key navigation
+│   │   │   ├── Navbar.tsx           # Top navigation shell
+│   │   │   ├── navbar/              # CitySearchAutocomplete, CityToastBanner, LanguageSwitcher, MobileCityBar
 │   │   │   ├── Footer.tsx           # Extracted accessible disclaimer footer
 │   │   │   ├── RiskMeter.tsx        # Modular 6-band CPCB gauge
 │   │   │   ├── risk-meter/          # Decomposed sub-components (AQIBandScale, PollutantGrid)
@@ -232,22 +236,25 @@ BreatheWise-Air-Quality-Assistance/
 │   │   │   ├── PlanCard.tsx         # 3-section daily action plan
 │   │   │   ├── ImpactBar.tsx        # Before vs. After exposure & savings bar
 │   │   │   ├── ChatAssistant.tsx    # Conversational GenAI assistant
-│   │   │   ├── HouseholdSelector.tsx# Profile drawer & sensitivity chips
+│   │   │   ├── HouseholdSelector.tsx# Profile card shell
+│   │   │   ├── household/           # MemberSensitivityList & CommuteHomeSettings fieldsets
 │   │   │   ├── SchoolView.tsx       # Campus advisory protocol dashboard
-│   │   │   └── CommunityView.tsx    # Responsive neighborhood leaderboard & challenges
-│   │   ├── hooks/                   # Extracted state hooks (useAirQuality, useHousehold, usePlan)
+│   │   │   ├── CommunityView.tsx    # Neighborhood challenges & leaderboard shell
+│   │   │   └── community/           # ChallengeCard & accessible LeaderboardTable
+│   │   ├── hooks/                   # Extracted state hooks with race-condition guards
 │   │   ├── lib/
 │   │   │   ├── cpcb.ts              # Mathematical CPCB NAQI calculation engine
 │   │   │   ├── cities.ts            # Indian city directory & metro classifications
 │   │   │   ├── presetPlan.ts        # Pre-calibrated plans for instant offline fallback
 │   │   │   ├── communityData.ts     # Neighborhood challenges and leaderboard state
-│   │   │   ├── sanitize.ts          # Unicode-safe input sanitization utility
+│   │   │   ├── feedback.ts          # Audio/haptic interaction feedback utility
+│   │   │   ├── sanitize.ts          # Unicode-safe city & chat input sanitization
 │   │   │   ├── logger.ts            # Environment-aware client logging utility
 │   │   │   ├── initialData.ts       # Backward-compatible barrel re-export
-│   │   │   ├── api.ts               # Resilient client API functions
+│   │   │   ├── api.ts               # Sanitized AbortController-timeout API client
 │   │   │   └── i18n.ts              # English, Hindi, Telugu, Tamil translations
-│   │   └── __tests__/               # Vitest suite (46 tests: app, a11y, cpcbBreakpoints, cpcbParity, i18n, routes)
-│   ├── next.config.js               # Strict HTTP security headers (HSTS, CSP, X-Frame)
+│   │   └── __tests__/               # Vitest suite (49 tests: app, a11y, cpcbBreakpoints, cpcbParity, i18n, routes)
+│   ├── next.config.js               # OWASP CSP headers & conditional INTERNAL_API_URL proxy
 │   ├── package.json                 # Next.js 14 & dependencies
 │   └── tailwind.config.js           # Tailwind CSS configuration
 ├── tests/
@@ -259,6 +266,8 @@ BreatheWise-Air-Quality-Assistance/
 │   ├── plan.png                     # Daily action plan screenshot
 │   └── thumbnail.jpg                # 16:9 Presentation thumbnail
 ├── ARCHITECTURE.md                  # System architecture, cross-stack design, and decoupling
+├── Makefile                         # Cross-platform dev, lint, typecheck, test & Docker targets
+├── docker-compose.yml               # Redis + FastAPI + Next.js stack with healthchecks
 ├── run_all.bat                      # Unified Windows launcher shim
 ├── run_backend.bat                  # Dedicated FastAPI backend launcher shim
 ├── run_frontend.bat                 # Dedicated Next.js frontend launcher shim
@@ -463,20 +472,20 @@ Under official Indian Central Pollution Control Board reporting conventions, amb
 
 ## 🧪 Automated Testing & CI/CD
 
-BreatheWise maintains **115 automated tests** (69 backend, 46 frontend) integrated into GitHub Actions. Backend line coverage is over 85% (pytest-cov), with CI enforcing a 70% minimum, plus ruff, black and ESLint checks:
+BreatheWise maintains **123 automated tests** (74 backend, 49 frontend) integrated into GitHub Actions, with `tsc --noEmit`, ruff, black, ESLint, and Next.js production build verification:
 
 ```bash
-# Frontend Tests (Vitest — 46 passed)
+# Frontend Tests (Vitest — 49 passed)
 cd frontend
 npm test -- --run
 
-# Backend Tests (Pytest with Coverage — 69 passed)
+# Backend Tests (Pytest with Coverage — 74 passed)
 python -m pytest backend/tests -v
 ```
 
 ### GitHub Actions CI Workflow (`.github/workflows/ci.yml`)
-- **`frontend-ci`**: Node 20 environment, dependency caching, Vitest execution, and production build verification.
-- **`backend-ci`**: Python 3.11 environment, ruff and black checks, then Pytest with coverage across schemas, safety rules, LLM-provider fallbacks, and CPCB algorithms.
+- **`frontend-ci`**: Node 20 environment, dependency caching, `tsc --noEmit`, ESLint, Vitest execution, and production build verification.
+- **`backend-ci`**: Python 3.11 environment, ruff and black checks, then Pytest with coverage across schemas, safety rules, security middleware, LLM-provider fallbacks, and CPCB algorithms.
 - **`security-audit`**: Automated secret scanning ensuring zero credentials exist in version control.
 
 ---
@@ -495,10 +504,10 @@ BreatheWise is designed for inclusive access:
 ## 🔒 Security & Threat Modeling
 
 BreatheWise adheres to strict cybersecurity standards (see [SECURITY.md](SECURITY.md)):
-- **HTTP Security Headers**: Enforces `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection: 1; mode=block`, and restrictive `Permissions-Policy`.
-- **In-Memory Rate Limiting**: Enforces a 120 requests/minute ceiling per client IP with `429 Too Many Requests` responses.
-- **Multi-Lingual Input Sanitization**: City parameters are sanitized using a Unicode-aware regular expression with the `u` flag (`/[^\p{L}\p{M}\p{N}\s()\-.]/gu`), preserving Latin, Devanagari, Telugu, and Tamil characters while neutralizing cross-site scripting (XSS) and injection attempts. Chat queries are length-capped at 1,000 characters.
-- **Stack Trace Suppression**: Generic 500 error handler prevents exposure of internal exception traces.
+- **HTTP Security Headers**: Enforces `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, strict `Content-Security-Policy`, and restrictive `Permissions-Policy` (with deprecated `X-XSS-Protection` removed and server banners stripped).
+- **Sliding-Window Rate Limiting**: Enforces a 120 requests/minute ceiling per client IP (Redis-backed when `REDIS_URL` is configured, with automatic in-memory deque fallback) and `429 Too Many Requests` responses.
+- **Multi-Lingual Input Sanitization & Prompt Hardening**: City parameters sanitize via `/[^\p{L}\p{M}\p{N}\s()\-.]/gu` and Python `unicodedata` (`L*`/`M*`/`N*`), preserving Latin, Devanagari, Telugu, and Tamil characters while neutralizing XSS. Chat payloads strip control chars, cap at 1,000 chars, reject extra Pydantic fields (`extra="forbid"`), and isolate queries inside `<user_query>` delimiters.
+- **Stack Trace Suppression & Prod Docs Gate**: Generic 500 error handler prevents exposure of internal exception traces, and Swagger `/docs` disables when `APP_ENV=production`.
 - **Zero Committed Secrets**: `.env.example` template provided; offline simulation operates seamlessly without requiring external credentials.
 
 ---

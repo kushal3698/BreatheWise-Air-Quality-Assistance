@@ -16,18 +16,20 @@ BreatheWise strictly maintains active security patches and updates for the follo
 BreatheWise is engineered with a **defense-in-depth security model** protecting user interactions, API endpoints, and client telemetry:
 
 ### 1. HTTP Security Headers
-Both the **Next.js 14** web application and the **FastAPI** backend enforce strict HTTP security headers:
+Both the **Next.js 14** web application and the **FastAPI** backend ([middleware/security.py](backend/app/middleware/security.py)) enforce strict OWASP HTTP security headers:
 - `Strict-Transport-Security (HSTS)`: `max-age=63072000; includeSubDomains; preload` enforces end-to-end encrypted HTTPS traffic.
 - `X-Frame-Options: DENY`: Prevents UI clickjacking and iframe embedding attacks.
 - `X-Content-Type-Options: nosniff`: Eliminates MIME-type confusion attacks.
-- `X-XSS-Protection: 1; mode=block`: Activates browser-level reflected cross-site scripting filters.
+- `Content-Security-Policy`: Enforces strict same-origin policies and `frame-ancestors 'none'` (removing deprecated `X-XSS-Protection` per OWASP guidance).
 - `Referrer-Policy: strict-origin-when-cross-origin`: Restricts outbound referrer leakage.
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()`: Disallows unauthorized browser hardware access.
-- `X-Powered-By`: Suppressed across all responses to prevent technology fingerprinting.
+- `X-Powered-By` / `Server`: Suppressed across all responses to prevent technology fingerprinting.
 
-### 2. Input Sanitization & Attack Surface Mitigation
-- **City Parameter Scrubbing**: Search parameters and city inputs are strictly sanitized with `/[^\p{L}\p{M}\p{N}\s()\-.]/gu` and truncated to 60 characters, neutralizing cross-site scripting (XSS), script injection, and path traversals.
-- **Payload Size & Type Enforcement**: Conversational chat payloads are capped at 1,000 characters with explicit type checking before LLM ingestion, preventing resource exhaustion (DoS) and prompt injection tampering.
+### 2. Input Sanitization, Rate Limiting & Attack Surface Mitigation
+- **City Parameter Scrubbing**: Frontend inputs use `/[^\p{L}\p{M}\p{N}\s()\-.]/gu` ([sanitize.ts](frontend/src/lib/sanitize.ts)) and backend Pydantic validators use `unicodedata` (`L*`/`M*`/`N*` categories) in [schemas.py](backend/app/models/schemas.py) so Latin, Devanagari, Telugu, and Tamil characters plus combining vowel marks survive while scripts and tags are scrubbed.
+- **Strict Pydantic Contracts & Payload Caps**: Request schemas forbid unknown extra fields (`extra="forbid"`), strip ASCII control characters, cap chat queries at 1,000 characters, and cap history depth.
+- **Prompt Injection Boundaries & RAG Safety**: LLM chat queries are wrapped in `<user_query>...</user_query>` untrusted data delimiters, and [rag.py](backend/app/services/rag.py) validates resolved markdown file paths via `is_relative_to()` to block symlink path traversal.
+- **Sliding-Window Rate Limiter & Production Docs Gate**: [middleware/security.py](backend/app/middleware/security.py) enforces sliding-window per-IP throttling backed optionally by Redis (`REDIS_URL`) with automatic in-memory fallback, and Swagger `/docs` / `/redoc` automatically disable when `APP_ENV=production`.
 - **Language Whitelisting**: Language switches strictly validate against supported ISO codes (`en`, `hi`, `te`, `ta`) with safe fallback to `en`.
 
 ### 3. Zero-Hardcoded Secrets Policy

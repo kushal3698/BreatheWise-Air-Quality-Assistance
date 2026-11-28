@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from app.models.schemas import AirQualityResponse
+from app.models.schemas import AirQualityResponse, coerce_safe_city
 from app.services.air_quality import fetch_air_quality
 
 router = APIRouter(prefix="/api", tags=["Air Quality"])
@@ -18,5 +18,6 @@ async def get_air_quality(
     Includes calibrated concentrations for PM2.5, PM10, NO2, SO2, CO, and O3,
     along with weather parameters and optimal safe outdoor activity windows.
     """
-    data = await fetch_air_quality(city)
+    safe_city = coerce_safe_city(city)
+    data = await fetch_air_quality(safe_city)
     return data

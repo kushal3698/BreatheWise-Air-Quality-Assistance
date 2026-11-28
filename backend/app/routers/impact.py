@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from app.models.schemas import HomeProfile, HouseholdProfile, ImpactSummary, TransportProfile
+from app.models.schemas import HomeProfile, HouseholdProfile, ImpactSummary, TransportProfile, coerce_safe_city
 from app.services.air_quality import fetch_air_quality
 from app.services.impact import calculate_overall_impact
 
@@ -22,7 +22,8 @@ async def get_impact_summary(
       - Monthly transportation fuel cost savings in INR
       - Equivalent daily cigarette smoke avoidance
     """
-    aqi_data = await fetch_air_quality(city)
+    safe_city = coerce_safe_city(city)
+    aqi_data = await fetch_air_quality(safe_city)
     pm25 = aqi_data.get("current", {}).get("pm2_5", 150.0)
 
     mock_household = HouseholdProfile(

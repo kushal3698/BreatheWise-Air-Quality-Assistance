@@ -1,3 +1,5 @@
+import { sanitizeChatMessage, sanitizeCity } from './sanitize';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
 export type { SupportedLanguage } from './i18n';
@@ -190,16 +192,18 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 }
 
 export async function fetchAQI(city: string = 'Delhi'): Promise<AirQualityData> {
-  const res = await fetchWithTimeout(`${API_BASE}/api/aqi?city=${encodeURIComponent(city)}`);
+  const safeCity = sanitizeCity(city);
+  const res = await fetchWithTimeout(`${API_BASE}/api/aqi?city=${encodeURIComponent(safeCity)}`);
   if (!res.ok) throw new Error('Failed to fetch air quality data');
   return res.json();
 }
 
 export async function fetchDailyPlan(city: string, language: string, household?: HouseholdProfile): Promise<DailyPlan> {
+  const safeCity = sanitizeCity(city);
   const res = await fetchWithTimeout(`${API_BASE}/api/plan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ city, language, household }),
+    body: JSON.stringify({ city: safeCity, language, household }),
   });
   if (!res.ok) throw new Error('Failed to generate daily plan');
   return res.json();
@@ -212,17 +216,24 @@ export async function sendChatMessage(
   household?: HouseholdProfile,
   history: ChatMessage[] = []
 ): Promise<ChatResponse> {
-  const res = await fetchWithTimeout(`${API_BASE}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, city, language, household, history }),
-  }, 10000); // 10s for chat assistant
+  const safeCity = sanitizeCity(city);
+  const safeMessage = sanitizeChatMessage(message);
+  const res = await fetchWithTimeout(
+    `${API_BASE}/api/chat`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: safeMessage, city: safeCity, language, household, history }),
+    },
+    10000
+  );
   if (!res.ok) throw new Error('Failed to communicate with BreatheWise assistant');
   return res.json();
 }
 
 export async function fetchSchoolGuidance(city: string = 'Delhi'): Promise<SchoolGuidance> {
-  const res = await fetchWithTimeout(`${API_BASE}/api/school/guidance?city=${encodeURIComponent(city)}`);
+  const safeCity = sanitizeCity(city);
+  const res = await fetchWithTimeout(`${API_BASE}/api/school/guidance?city=${encodeURIComponent(safeCity)}`);
   if (!res.ok) throw new Error('Failed to fetch school guidance');
   return res.json();
 }

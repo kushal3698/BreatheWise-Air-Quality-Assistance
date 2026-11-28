@@ -7,6 +7,19 @@ from pydantic import BaseModel
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+
+def _resolve_knowledge_base_path() -> Path:
+    """Resolve KNOWLEDGE_BASE_PATH safely from environment or default backend/knowledge_base."""
+    raw = os.getenv("KNOWLEDGE_BASE_PATH", "").strip()
+    if raw:
+        candidate = Path(raw)
+        if candidate.exists():
+            return candidate
+        if (BASE_DIR / candidate).exists():
+            return BASE_DIR / candidate
+    return BASE_DIR / "knowledge_base"
+
+
 # --- Environmental & Health Constants ---
 # Berkeley Earth / WHO public health empirical relationship: ~22 µg/m³ PM2.5 over 24h ≈ 1 cigarette
 PM25_CIGARETTE_EQUIVALENT_UGM3: float = 22.0
@@ -19,13 +32,14 @@ WHO_PM25_GUIDELINE: float = 15.0
 
 
 class Settings(BaseModel):
-    app_env: str = os.getenv("APP_ENV", "development")
-    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    app_env: str = os.getenv("APP_ENV", "development").lower()
+    log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
     demo_mode: bool = os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
     default_city: str = os.getenv("DEFAULT_CITY", "Delhi")
     default_language: str = os.getenv("DEFAULT_LANGUAGE", "en")
 
-    # Rate Limiting
+    # Rate Limiting & Optional Redis
+    redis_url: str = os.getenv("REDIS_URL", "")
     rate_limit_requests_per_minute: int = int(os.getenv("RATE_LIMIT_RPM", "120"))
 
     # LLM Settings
@@ -45,7 +59,7 @@ class Settings(BaseModel):
     # Paths
     base_dir: Path = BASE_DIR
     config_dir: Path = BASE_DIR / "config"
-    knowledge_base_path: Path = BASE_DIR / "knowledge_base"
+    knowledge_base_path: Path = _resolve_knowledge_base_path()
     demo_data_path: Path = BASE_DIR / "demo_data"
 
     # CORS: Whitelist localhost development and Vercel production frontend

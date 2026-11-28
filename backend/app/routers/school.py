@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from app.models.schemas import SchoolGuidanceResponse
+from app.models.schemas import SchoolGuidanceResponse, coerce_safe_city
 from app.services.air_quality import fetch_air_quality
 
 router = APIRouter(prefix="/api/school", tags=["School Guidance"])
@@ -20,7 +20,8 @@ async def get_school_guidance(
       - Classroom ventilation and filtration requirements
       - Asthmatic and vulnerable student safeguards
     """
-    aqi_data = await fetch_air_quality(city)
+    safe_city = coerce_safe_city(city)
+    aqi_data = await fetch_air_quality(safe_city)
     curr = aqi_data.get("current", {})
     aqi = curr.get("aqi", 250)
     category = curr.get("category", "Poor")
@@ -50,7 +51,7 @@ async def get_school_guidance(
     return SchoolGuidanceResponse(
         aqi=aqi,
         category=category,
-        city=city,
+        city=safe_city,
         assembly_guideline=assembly,
         sports_guideline=sports,
         recess_guideline=recess,

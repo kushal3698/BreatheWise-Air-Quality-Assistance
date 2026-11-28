@@ -68,13 +68,17 @@ To maintain high code quality and adhere to the project constraint that UI compo
   - `usePlan`: Handles diurnal action plan generation, structured fallback recovery, and background re-validation.
 - **Decomposed Visual Components**:
   - `RiskMeter.tsx`: Core container decoupled into `AQIBandScale.tsx` (6-segment gauge) and `PollutantGrid.tsx` (pollutant benchmark cards).
+  - `Navbar.tsx` & `MobileCityBar.tsx`: Share a unified `CitySearchAutocomplete.tsx` and accessible `LanguageSwitcher.tsx`.
+  - `DashboardTabs.tsx`: Implements WCAG 2.1 AA `tablist` semantics with Left/Right/Home/End keyboard arrow navigation across all 6 application views.
+  - `HouseholdSelector.tsx` & `CommunityView.tsx`: Decoupled into semantic sub-components (`MemberSensitivityList`, `CommuteHomeSettings`, `ChallengeCard`, `LeaderboardTable`).
   - `ForecastChart.tsx`: Diurnal 24-hour area chart with strictly formatted tooltips and two-hour tick intervals.
-  - `Sanitizer Utility (`frontend/src/lib/sanitize.ts`)`: Centralized `sanitizeCity()` utility using a Unicode-aware regular expression (`/[^\p{L}\p{M}\p{N}\s()\-.]/gu`) shared across all API routes.
+  - `Sanitizer Utility (`frontend/src/lib/sanitize.ts`)`: Centralized `sanitizeCity()` and `sanitizeChatMessage()` utilities shared across client requests and API routes.
+  - **Conditional Reverse Proxy (`frontend/next.config.js`)**: Proxies `/api/*` directly to FastAPI when `INTERNAL_API_URL` is configured (e.g., Docker Compose with Redis), while preserving native Next.js serverless routes on Vercel.
 
 ---
 
 ## 5. Security & Responsible AI Guardrails
 
-1. **Security Headers**: Both FastAPI middleware and Next.js enforce HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and a strict `Permissions-Policy`.
+1. **Security Middleware & Headers**: FastAPI (`backend/app/middleware/security.py`) and Next.js enforce strict CSP, HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Permissions-Policy`, sliding-window rate limiting (optional Redis + in-memory fallback), `<user_query>` prompt-injection delimiters, and `is_relative_to()` RAG path-traversal protection.
 2. **Deterministic Math Floor**: No life-safety or emissions metrics are generated via LLM text completion. All numerical values (exposure reduction, $\text{CO}_2$ saved, fuel costs avoided, cigarette equivalents) are calculated via verified deterministic algorithms.
 3. **Clinical Asthma Guardrail**: Whenever an asthmatic household member is present, a dedicated inhaler caution banner is permanently injected into the plan post-generation, regardless of whether a rule-based or GenAI provider produced the output.
