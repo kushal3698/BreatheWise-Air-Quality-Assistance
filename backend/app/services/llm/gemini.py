@@ -76,7 +76,7 @@ Respond ONLY with valid JSON matching the DailyPlan schema.
                 "contents": [{"parts": [{"text": f"{system_instruction}\n\n{user_prompt}"}]}],
                 "generationConfig": {"responseMimeType": "application/json", "temperature": 0.3},
             }
-            async with httpx.AsyncClient(timeout=12.0) as client:
+            async with httpx.AsyncClient(timeout=20.0) as client:
                 res = await client.post(_endpoint(), json=payload, headers=_headers())
             if res.status_code == 200:
                 candidates = res.json().get("candidates", [])
@@ -126,7 +126,7 @@ Never diagnose illness. Include medical safety caution if high AQI or asthma. Us
 """
         try:
             payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.4}}
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=20.0) as client:
                 res = await client.post(_endpoint(), json=payload, headers=_headers())
             if res.status_code == 200:
                 candidates = res.json().get("candidates", [])

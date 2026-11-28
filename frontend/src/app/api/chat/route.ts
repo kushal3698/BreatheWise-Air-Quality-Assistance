@@ -3,6 +3,7 @@ import { generateLocalChatReply } from '@/lib/chatEngine';
 import { sanitizeChatMessage, sanitizeCity } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +22,8 @@ export async function POST(req: NextRequest) {
     const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
     const demoMode = process.env.DEMO_MODE === 'true';
     if (!demoMode && apiKey && apiKey !== 'demo') {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -30,6 +33,7 @@ export async function POST(req: NextRequest) {
               'Content-Type': 'application/json',
               'x-goog-api-key': apiKey
             },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [
                 {
@@ -71,6 +75,8 @@ Include Why, Alternatives, and Estimated Impact. Use only supplied environmental
         }
       } catch {
         // If the model call fails, the assistant falls back to the rule-based provider
+      } finally {
+        clearTimeout(timer);
       }
     }
 
