@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCityPresetAQI, getCityPresetPlan, buildMandatoryCautions, STANDARD_DISCLAIMER } from '@/lib/presetPlan';
 import { sanitizeCity } from '@/lib/sanitize';
-import type { DailyPlan, HouseholdProfile } from '@/lib/api';
+import type { DailyPlan, HouseholdProfile, PlanActionItem, PlanTimelineItem } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -9,6 +9,67 @@ export const maxDuration = 60;
 interface GeminiPart {
   text?: string;
   thought?: boolean;
+}
+
+interface RawGeminiAction {
+  action?: unknown;
+  why?: unknown;
+  reason?: unknown;
+  effort?: unknown;
+  cost?: unknown;
+  sources?: unknown;
+}
+
+function normalizeActionItems(rawItems: unknown[], fallbackItems: PlanActionItem[]): PlanActionItem[] {
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    return fallbackItems;
+  }
+  const normalized = rawItems
+    .map((entry, idx): PlanActionItem | null => {
+      const obj = (typeof entry === 'object' && entry !== null ? entry : {}) as RawGeminiAction;
+      const fb = fallbackItems[idx] ?? fallbackItems[0];
+      const action = typeof obj.action === 'string' && obj.action.trim() ? obj.action.trim() : fb?.action ?? '';
+      if (!action) return null;
+      const why =
+        typeof obj.why === 'string' && obj.why.trim()
+          ? obj.why.trim()
+          : typeof obj.reason === 'string' && obj.reason.trim()
+            ? obj.reason.trim()
+            : fb?.why ?? 'Lowers household exposure to ambient fine particulate peaks.';
+      const effort = typeof obj.effort === 'string' && obj.effort.trim() ? obj.effort.trim().toLowerCase() : fb?.effort ?? 'low';
+      const cost = typeof obj.cost === 'string' && obj.cost.trim() ? obj.cost.trim().toLowerCase() : fb?.cost ?? 'free';
+      const sources =
+        Array.isArray(obj.sources) && obj.sources.every((s) => typeof s === 'string') && obj.sources.length > 0
+          ? (obj.sources as string[])
+          : fb?.sources ?? ['kb/indoor_air_quality.md'];
+      return {
+        action,
+        why,
+        effort,
+        cost,
+        // Per-action impact figures ALWAYS stay deterministically grounded
+        impact: fb?.impact ?? { exposure_reduction_pct: 15, confidence: 'Modelled estimate' },
+        sources,
+      };
+    })
+    .filter((item): item is PlanActionItem => item !== null);
+  return normalized.length > 0 ? normalized : fallbackItems;
+}
+
+function normalizeTimeline(rawTimeline: unknown[], fallbackTimeline: PlanTimelineItem[]): PlanTimelineItem[] {
+  if (!Array.isArray(rawTimeline) || rawTimeline.length === 0) {
+    return fallbackTimeline;
+  }
+  const normalized = rawTimeline
+    .map((entry, idx): PlanTimelineItem | null => {
+      const obj = (typeof entry === 'object' && entry !== null ? entry : {}) as Record<string, unknown>;
+      const fb = fallbackTimeline[idx] ?? fallbackTimeline[0];
+      const time = typeof obj.time === 'string' && obj.time.trim() ? obj.time.trim() : fb?.time ?? '';
+      const advice = typeof obj.advice === 'string' && obj.advice.trim() ? obj.advice.trim() : fb?.advice ?? '';
+      return time && advice ? { time, advice } : null;
+    })
+    .filter((slot): slot is PlanTimelineItem => slot !== null);
+  return normalized.length > 0 ? normalized : fallbackTimeline;
 }
 
 export async function POST(req: NextRequest) {
@@ -39,14 +100,14 @@ Respond ONLY with valid JSON matching:
 - summary: string
 - risk_level: "good" | "moderate" | "poor" | "very_poor" | "severe"
 - sections: {
-    "low_emission_routines": [{"action": str, "reason": str, "impact_tag": str}],
-    "indoor_air_hacks": [{"action": str, "reason": str, "impact_tag": str}],
-    "sustainable_alternatives": [{"action": str, "reason": str, "impact_tag": str}]
+    "low_emission_routines": [{"action": str, "why": str, "effort": "low"|"medium"|"high", "cost": "free"|"low"|"moderate", "sources": [str]}],
+    "indoor_air_hacks": [{"action": str, "why": str, "effort": "low"|"medium"|"high", "cost": "free"|"low"|"moderate", "sources": [str]}],
+    "sustainable_alternatives": [{"action": str, "why": str, "effort": "low"|"medium"|"high", "cost": "free"|"low"|"moderate", "sources": [str]}]
   }
-- today_timeline: [{"time": str, "window": str, "advice": str}]
+- today_timeline: [{"time": str, "advice": str}]
 - cautions: [str]
 - disclaimer: str
-Do NOT invent impact numbers; keep 2-3 practical Indian city items per section.
+Do NOT invent impact numbers; keep 2 practical Indian city items per section.
 City: ${city}
 Language: ${language}
 AQI Current: ${JSON.stringify(aqi.current)}
@@ -101,24 +162,20 @@ Household: ${JSON.stringify(household || {})}`;
                   summary: parsed.summary,
                   risk_level: parsed.risk_level ?? baselinePlan.risk_level,
                   sections: {
-                    low_emission_routines:
-                      parsed.sections.low_emission_routines.length > 0
-                        ? parsed.sections.low_emission_routines
-                        : baselinePlan.sections.low_emission_routines,
-                    indoor_air_hacks:
-                      parsed.sections.indoor_air_hacks.length > 0
-                        ? parsed.sections.indoor_air_hacks
-                        : baselinePlan.sections.indoor_air_hacks,
-                    sustainable_alternatives:
-                      Array.isArray(parsed.sections.sustainable_alternatives) &&
-                      parsed.sections.sustainable_alternatives.length > 0
-                        ? parsed.sections.sustainable_alternatives
-                        : baselinePlan.sections.sustainable_alternatives,
+                    low_emission_routines: normalizeActionItems(
+                      parsed.sections.low_emission_routines,
+                      baselinePlan.sections.low_emission_routines
+                    ),
+                    indoor_air_hacks: normalizeActionItems(
+                      parsed.sections.indoor_air_hacks,
+                      baselinePlan.sections.indoor_air_hacks
+                    ),
+                    sustainable_alternatives: normalizeActionItems(
+                      parsed.sections.sustainable_alternatives ?? [],
+                      baselinePlan.sections.sustainable_alternatives
+                    ),
                   },
-                  today_timeline:
-                    Array.isArray(parsed.today_timeline) && parsed.today_timeline.length > 0
-                      ? parsed.today_timeline
-                      : baselinePlan.today_timeline,
+                  today_timeline: normalizeTimeline(parsed.today_timeline ?? [], baselinePlan.today_timeline),
                   // Deterministic engine figures ALWAYS override LLM estimates
                   impact_summary: baselinePlan.impact_summary,
                   cautions: mergedCautions,

@@ -74,37 +74,39 @@ export const PlanCard: React.FC<PlanCardProps> = ({ plan, household, enabledActi
                   </label>
                   <div className="flex items-center gap-1.5 text-[11px] shrink-0">
                     <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 capitalize font-medium">
-                      {item.effort} effort
+                      {item.effort || 'low'} effort
                     </span>
                     <span
                       className={`px-2 py-0.5 rounded-full font-medium capitalize ${
-                        item.cost === 'free' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                        (item.cost || 'free') === 'free'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-blue-100 text-blue-800'
                       }`}
                     >
-                      {item.cost}
+                      {item.cost || 'free'}
                     </span>
                   </div>
                 </div>
 
                 <p className="text-xs text-slate-600 leading-relaxed mb-3">
                   <strong className="text-slate-700 font-semibold">Why this matters: </strong>
-                  {item.why}
+                  {item.why || 'Reduces household fine particulate intake during high-pollution hours.'}
                 </p>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/60">
                   <div className="flex items-center gap-3 text-xs">
-                    {item.impact.exposure_reduction_pct ? (
+                    {item.impact?.exposure_reduction_pct ? (
                       <span className="flex items-center gap-1 text-emerald-700 font-semibold">
                         <TrendingDown className="w-3.5 h-3.5" aria-hidden="true" />
                         ~{item.impact.exposure_reduction_pct}% less exposure
                       </span>
                     ) : null}
-                    {item.impact.co2_saved_kg ? (
+                    {item.impact?.co2_saved_kg ? (
                       <span className="flex items-center gap-1 text-teal-700 font-semibold">
                         <Leaf className="w-3.5 h-3.5" aria-hidden="true" />+{item.impact.co2_saved_kg} kg CO₂ saved
                       </span>
                     ) : null}
-                    {item.impact.cost_saved_inr ? (
+                    {item.impact?.cost_saved_inr ? (
                       <span className="text-blue-700 font-semibold">₹{item.impact.cost_saved_inr} saved</span>
                     ) : null}
                   </div>

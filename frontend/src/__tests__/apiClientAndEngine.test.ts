@@ -9,6 +9,7 @@ import {
   fetchCommunityChallenges,
 } from '../lib/api';
 import { generateLocalChatReply } from '../lib/chatEngine';
+import { recalculateInteractiveImpact } from '../lib/impactSimulator';
 import { GET as getAQI } from '../app/api/aqi/route';
 import { POST as postPlan } from '../app/api/plan/route';
 import { POST as postChat } from '../app/api/chat/route';
@@ -123,7 +124,7 @@ describe('Frontend API Client, Local Chat Engine, and Live Route Branches', () =
       summary: 'Live Gemini Summary',
       risk_level: 'very_poor',
       sections: {
-        low_emission_routines: [],
+        low_emission_routines: [{ action: 'Take metro', reason: 'Cuts exhaust' }],
         indoor_air_hacks: [],
         sustainable_alternatives: [],
       },
@@ -146,6 +147,16 @@ describe('Frontend API Client, Local Chat Engine, and Live Route Branches', () =
     const planRes = await postPlan(planReq);
     const plan = await planRes.json();
     expect(plan.summary).toBe('Live Gemini Summary');
+    expect(plan.sections.low_emission_routines[0].why).toBe('Cuts exhaust');
+    expect(plan.sections.low_emission_routines[0].impact.confidence).toBe('Modelled estimate');
+    expect(() =>
+      recalculateInteractiveImpact(
+        [{ action: 'Partial item', why: 'reason', effort: 'low', cost: 'free', sources: [], impact: undefined as never }],
+        new Set(['0:Partial item']),
+        150,
+        plan.impact_summary
+      )
+    ).not.toThrow();
     expect(plan.impact_summary.exposure_reduction_pct).not.toBe(99);
     expect(plan.cautions.some((c: string) => /inhalers/i.test(c))).toBe(true);
     expect(plan.cautions).toContain('LLM extra tip');

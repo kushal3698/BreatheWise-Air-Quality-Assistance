@@ -85,10 +85,11 @@ export function recalculateInteractiveImpact(
   let checkedCostWeight = 0;
 
   allActions.forEach((item, idx) => {
-    const key = `${idx}:${item.action}`;
-    const expW = item.impact.exposure_reduction_pct ?? 10;
-    const co2W = item.impact.co2_saved_kg ?? 0;
-    const costW = item.impact.cost_saved_inr ?? 0;
+    const key = `${idx}:${item?.action ?? ''}`;
+    const impact = item?.impact as Partial<NonNullable<PlanActionItem['impact']>> | undefined;
+    const expW = impact?.exposure_reduction_pct ?? 10;
+    const co2W = impact?.co2_saved_kg ?? 0;
+    const costW = impact?.cost_saved_inr ?? 0;
 
     totalExpWeight += expW;
     totalCo2Weight += co2W;
